@@ -6,6 +6,7 @@ Demo interactivo de WebMCP (Web Model Context Protocol) para la charla **"Prepar
 
 Este proyecto muestra cómo implementar WebMCP en una aplicación web real usando tanto la API Declarativa (HTML) como la API Imperativa (JavaScript).
 
+🔗 **Demo en vivo:** [webmcp-demo-ten.vercel.app](https://webmcp-demo-ten.vercel.app)
 🔗 **Repositorio:** [github.com/aileenvl/webmcp-demo](https://github.com/aileenvl/webmcp-demo)
 
 > ⚠️ **Nota:** WebMCP requiere Chrome 146+ Canary con el flag `chrome://flags/#enable-webmcp-testing` habilitado.
