@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Search, ShoppingCart, UtensilsCrossed, Info, Trash2, Star, Clock } from 'lucide-react'
 
 export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([])
@@ -22,7 +23,7 @@ export default function Home() {
     setWebmcpStatus(available ? 'available' : 'unavailable')
 
     if (!available) {
-      console.warn('⚠️ WebMCP not available. Enable chrome://flags/#enable-webmcp-testing')
+      console.warn('⚠️ WebMCP not available')
       return
     }
 
@@ -38,64 +39,42 @@ export default function Home() {
   const registerImperativeTools = () => {
     registerWebMCPTool({
       name: 'addToCart',
-      description: 'Agregar un producto al carrito de compras',
+      description: 'Add product to shopping cart',
       inputSchema: {
         type: 'object',
         properties: {
-          restaurantId: { type: 'string', description: 'ID del restaurante' },
-          menuItemId: { type: 'string', description: 'ID del producto' },
-          quantity: { type: 'number', description: 'Cantidad', minimum: 1, maximum: 10 }
+          restaurantId: { type: 'string', description: 'Restaurant ID' },
+          menuItemId: { type: 'string', description: 'Menu item ID' },
+          quantity: { type: 'number', minimum: 1, maximum: 10 }
         },
         required: ['restaurantId', 'menuItemId', 'quantity']
       },
       execute: async ({ restaurantId, menuItemId, quantity }) => {
         const restaurant = restaurants.find(r => r.id === restaurantId)
-        if (!restaurant) {
-          return { error: `Restaurant no encontrado: ${restaurantId}` }
-        }
+        if (!restaurant) return { error: `Restaurant not found: ${restaurantId}` }
 
         const menuItem = restaurant.menu.find(m => m.id === menuItemId)
-        if (!menuItem) {
-          return { error: `Producto no encontrado: ${menuItemId}` }
-        }
+        if (!menuItem) return { error: `Item not found: ${menuItemId}` }
+        if (!menuItem.inStock) return { error: `${menuItem.name} is out of stock` }
 
-        if (!menuItem.inStock) {
-          return { error: `"${menuItem.name}" no está disponible` }
-        }
-
-        const newItem: CartItem = {
-          menuItem,
-          restaurant,
-          quantity,
-          customizations: {}
-        }
-
-        setCart(prev => [...prev, newItem])
-        showNotification(`✅ ${quantity}x ${menuItem.name} agregado`)
-
-        return {
-          success: true,
-          message: `${quantity}x ${menuItem.name} agregado al carrito`
-        }
+        setCart(prev => [...prev, { menuItem, restaurant, quantity, customizations: {} }])
+        showNotification(`Added ${quantity}x ${menuItem.name}`)
+        return { success: true, message: `${quantity}x ${menuItem.name} added to cart` }
       }
     })
 
     registerWebMCPTool({
       name: 'viewCart',
-      description: 'Ver contenido del carrito',
+      description: 'View cart contents',
       inputSchema: { type: 'object', properties: {} },
       execute: async () => {
-        if (cart.length === 0) {
-          return { message: 'Carrito vacío' }
-        }
-
+        if (cart.length === 0) return { message: 'Cart is empty' }
         const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
         return {
           items: cart.map(item => ({
             name: item.menuItem.name,
             quantity: item.quantity,
-            price: item.menuItem.price,
-            subtotal: item.menuItem.price * item.quantity
+            price: item.menuItem.price
           })),
           total: total.toFixed(2),
           itemCount: cart.length
@@ -105,44 +84,36 @@ export default function Home() {
 
     registerWebMCPTool({
       name: 'clearCart',
-      description: 'Vaciar el carrito',
+      description: 'Clear the shopping cart',
       inputSchema: { type: 'object', properties: {} },
       execute: async () => {
         const itemCount = cart.length
         setCart([])
-        showNotification('🗑️ Carrito vaciado')
-        return { success: true, message: `${itemCount} items removidos` }
+        showNotification('Cart cleared')
+        return { success: true, message: `Removed ${itemCount} items` }
       }
     })
 
     registerWebMCPTool({
       name: 'getRestaurantInfo',
-      description: 'Obtener info de un restaurante',
+      description: 'Get restaurant information and menu',
       inputSchema: {
         type: 'object',
-        properties: {
-          restaurantId: { type: 'string', description: 'ID del restaurante' }
-        },
+        properties: { restaurantId: { type: 'string' } },
         required: ['restaurantId']
       },
       execute: async ({ restaurantId }) => {
         const restaurant = restaurants.find(r => r.id === restaurantId)
-        if (!restaurant) {
-          return { error: `Restaurant no encontrado: ${restaurantId}` }
-        }
-
+        if (!restaurant) return { error: `Restaurant not found: ${restaurantId}` }
         return {
           name: restaurant.name,
           cuisine: restaurant.cuisine,
-          priceRange: restaurant.priceRange,
           rating: restaurant.rating,
-          deliveryTime: restaurant.deliveryTime,
-          menu: restaurant.menu.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            inStock: item.inStock
+          menu: restaurant.menu.map(i => ({
+            id: i.id,
+            name: i.name,
+            price: i.price,
+            inStock: i.inStock
           }))
         }
       }
@@ -154,13 +125,8 @@ export default function Home() {
     window.addEventListener('toolcancel', handleToolCancel)
   }
 
-  const handleToolActivated = (event: any) => {
-    showNotification(`🤖 Agent usando: ${event.detail?.toolName || 'herramienta'}`)
-  }
-
-  const handleToolCancel = (event: any) => {
-    showNotification(`❌ Operación cancelada`)
-  }
+  const handleToolActivated = () => showNotification('AI Agent is active')
+  const handleToolCancel = () => showNotification('Operation cancelled')
 
   const showNotification = (message: string) => {
     setNotification(message)
@@ -168,9 +134,7 @@ export default function Home() {
   }
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const event = e.nativeEvent as any
     e.preventDefault()
-
     const formData = new FormData(e.currentTarget)
     const cuisine = formData.get('cuisine') as string
     const priceRange = formData.get('priceRange') as string
@@ -183,60 +147,22 @@ export default function Home() {
       filtered = filtered.filter(r => r.priceRange === priceRange)
     }
 
-    const response = {
-      results: filtered.map(r => ({
-        id: r.id,
-        name: r.name,
-        cuisine: r.cuisine,
-        priceRange: r.priceRange,
-        rating: r.rating
-      }))
-    }
-
-    if (event.agentInvoked) {
-      // @ts-ignore
-      event.respondWith(response)
-    }
-
-    showNotification(`✅ ${filtered.length} restaurantes encontrados`)
+    showNotification(`Found ${filtered.length} restaurants`)
   }
 
   const handleCheckoutSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const event = e.nativeEvent as any
     e.preventDefault()
-
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
     const address = formData.get('address') as string
-    const phone = formData.get('phone') as string
 
-    if (!name || !address || !phone) {
-      showNotification('❌ Campos requeridos')
+    if (!name || !address || cart.length === 0) {
+      showNotification('Please fill all fields and add items to cart')
       return
     }
 
-    if (cart.length === 0) {
-      showNotification('❌ Carrito vacío')
-      return
-    }
-
-    const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
     const orderId = `ORD-${Date.now()}`
-
-    const response = {
-      success: true,
-      orderId,
-      total: total.toFixed(2),
-      estimatedDelivery: '30-40 min',
-      message: `Pedido confirmado para ${name}`
-    }
-
-    if (event.agentInvoked) {
-      // @ts-ignore
-      event.respondWith(response)
-    }
-
-    showNotification(`✅ Pedido ${orderId} confirmado!`)
+    showNotification(`Order ${orderId} confirmed!`)
     setCart([])
     e.currentTarget.reset()
   }
@@ -244,250 +170,163 @@ export default function Home() {
   const cartTotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      {/* Notification */}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800">
       {notification && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right">
-          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950">
-            <CardContent className="pt-6">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{notification}</p>
-            </CardContent>
-          </Card>
+        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg animate-in slide-in-from-right">
+          {notification}
         </div>
       )}
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
         <header className="mb-8">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-                <span className="text-6xl">🌮</span>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
                 TacoAgent
               </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                Demo de WebMCP - Food Delivery con IA
+              <p className="text-gray-600 dark:text-gray-300">
+                WebMCP Demo - AI-Ready Food Delivery
               </p>
             </div>
-            <Badge
-              variant={webmcpStatus === 'available' ? 'default' : 'destructive'}
-              className="text-sm px-4 py-2"
-            >
-              <span className={`w-2 h-2 rounded-full mr-2 ${
-                webmcpStatus === 'available' ? 'bg-green-400' : 'bg-red-400'
-              } animate-pulse`}></span>
-              {webmcpStatus === 'checking' && 'Verificando...'}
-              {webmcpStatus === 'available' && 'WebMCP Activo'}
-              {webmcpStatus === 'unavailable' && 'WebMCP No Disponible'}
+            <Badge variant={webmcpStatus === 'available' ? 'default' : 'destructive'} className="text-sm px-4 py-2">
+              {webmcpStatus === 'available' ? 'WebMCP Active' : 'WebMCP Unavailable'}
             </Badge>
           </div>
         </header>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left Column */}
           <div className="space-y-6">
-            {/* Search Form */}
-            <Card className="shadow-lg">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🔍</span>
-                  Buscar Restaurantes
+                  <Search className="w-5 h-5" />
+                  Search Restaurants
                 </CardTitle>
-                <CardDescription>API Declarativa (HTML)</CardDescription>
+                <CardDescription>Declarative API (HTML)</CardDescription>
               </CardHeader>
               <CardContent>
-                <form
-                  onSubmit={handleSearchSubmit}
-                  toolname="searchRestaurants"
-                  tooldescription="Buscar restaurantes por cocina y precio"
-                  className="space-y-4"
-                >
+                <form onSubmit={handleSearchSubmit} toolname="searchRestaurants" tooldescription="Search restaurants" className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cuisine">Tipo de Cocina</Label>
+                    <Label htmlFor="cuisine">Cuisine Type</Label>
                     <Select name="cuisine" defaultValue="all">
-                      <SelectTrigger id="cuisine">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="mexicana">Mexicana</SelectItem>
-                        <SelectItem value="italiana">Italiana</SelectItem>
-                        <SelectItem value="japonesa">Japonesa</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="mexicana">Mexican</SelectItem>
+                        <SelectItem value="italiana">Italian</SelectItem>
+                        <SelectItem value="japonesa">Japanese</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="priceRange">Rango de Precio</Label>
+                    <Label htmlFor="priceRange">Price Range</Label>
                     <Select name="priceRange" defaultValue="all">
-                      <SelectTrigger id="priceRange">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="$">$ - Económico</SelectItem>
-                        <SelectItem value="$$">$$ - Medio</SelectItem>
-                        <SelectItem value="$$$">$$$ - Caro</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="$">$ - Budget</SelectItem>
+                        <SelectItem value="$$">$$ - Moderate</SelectItem>
+                        <SelectItem value="$$$">$$$ - Premium</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <Button type="submit" className="w-full" size="lg">
-                    Buscar Restaurantes
-                  </Button>
+                  <Button type="submit" className="w-full">Search Restaurants</Button>
                 </form>
               </CardContent>
             </Card>
 
-            {/* Checkout Form */}
-            <Card className="shadow-lg">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🛒</span>
-                  Finalizar Pedido
+                  <ShoppingCart className="w-5 h-5" />
+                  Checkout
                 </CardTitle>
-                <CardDescription>API Declarativa + Validación</CardDescription>
+                <CardDescription>Declarative API + Validation</CardDescription>
               </CardHeader>
               <CardContent>
-                <form
-                  onSubmit={handleCheckoutSubmit}
-                  toolname="checkout"
-                  tooldescription="Finalizar pedido con info de entrega"
-                  className="space-y-4"
-                >
+                <form onSubmit={handleCheckoutSubmit} toolname="checkout" tooldescription="Complete order" className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nombre Completo *</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="Juan Pérez"
-                      required
-                      toolparamdescription="Nombre completo"
-                    />
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input id="name" name="name" placeholder="John Doe" required />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="address">Dirección de Entrega *</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      placeholder="Av. Corrientes 1234, CABA"
-                      required
-                      toolparamdescription="Dirección completa"
-                    />
+                    <Label htmlFor="address">Delivery Address</Label>
+                    <Input id="address" name="address" placeholder="123 Main St" required />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+54 11 1234-5678"
-                      required
-                      toolparamdescription="Número de teléfono"
-                    />
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input id="phone" name="phone" type="tel" placeholder="+1 234 567 8900" required />
                   </div>
-
                   <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Items:</span>
-                      <span className="font-semibold">{cart.length}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total:</span>
-                      <span className="text-orange-600 dark:text-orange-400">
-                        ${cartTotal.toFixed(2)}
-                      </span>
-                    </div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-muted-foreground">Items:</span>
+                    <span className="font-semibold">{cart.length}</span>
                   </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    size="lg"
-                    disabled={cart.length === 0}
-                    variant={cart.length === 0 ? 'secondary' : 'default'}
-                  >
-                    {cart.length === 0 ? 'Carrito Vacío' : 'Confirmar Pedido'}
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total:</span>
+                    <span className="text-orange-600">${cartTotal.toFixed(2)}</span>
+                  </div>
+                  <Button type="submit" className="w-full" size="lg" disabled={cart.length === 0}>
+                    {cart.length === 0 ? 'Cart Empty' : 'Confirm Order'}
                   </Button>
                 </form>
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-6">
-            {/* Restaurants */}
-            <Card className="shadow-lg">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🍽️</span>
-                  Restaurantes Disponibles
+                  <UtensilsCrossed className="w-5 h-5" />
+                  Available Restaurants
                 </CardTitle>
-                <CardDescription>Click para ver menú</CardDescription>
+                <CardDescription>Click to view menu</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {restaurants.map(restaurant => (
                   <Card
                     key={restaurant.id}
                     className="cursor-pointer hover:border-orange-500 transition-colors"
-                    onClick={() => setSelectedRestaurant(
-                      selectedRestaurant?.id === restaurant.id ? null : restaurant
-                    )}
+                    onClick={() => setSelectedRestaurant(selectedRestaurant?.id === restaurant.id ? null : restaurant)}
                   >
                     <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl">{restaurant.image}</span>
-                          <div>
-                            <h3 className="font-bold text-lg">{restaurant.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {restaurant.cuisine} • {restaurant.priceRange}
-                            </p>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-lg">{restaurant.name}</h3>
+                          <p className="text-sm text-muted-foreground">{restaurant.cuisine} • {restaurant.priceRange}</p>
+                        </div>
+                        <div className="text-right text-sm">
+                          <div className="flex items-center gap-1 mb-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-semibold">{restaurant.rating}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            <span>{restaurant.deliveryTime}</span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <Badge variant="secondary" className="mb-1">
-                            ⭐ {restaurant.rating}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground">
-                            {restaurant.deliveryTime}
-                          </p>
-                        </div>
                       </div>
-
                       {selectedRestaurant?.id === restaurant.id && (
                         <>
                           <Separator className="my-3" />
                           <div className="space-y-2">
-                            <h4 className="font-semibold text-sm mb-2">Menú:</h4>
+                            <h4 className="font-semibold text-sm mb-2">Menu:</h4>
                             {restaurant.menu.map(item => (
-                              <div
-                                key={item.id}
-                                className={`flex justify-between items-center p-2 rounded text-sm ${
-                                  item.inStock
-                                    ? 'bg-secondary'
-                                    : 'bg-destructive/10 opacity-60'
-                                }`}
-                              >
+                              <div key={item.id} className={`flex justify-between items-center p-2 rounded text-sm ${item.inStock ? 'bg-secondary' : 'bg-destructive/10 opacity-60'}`}>
                                 <div>
                                   <span className="font-medium">{item.name}</span>
-                                  {!item.inStock && (
-                                    <Badge variant="destructive" className="ml-2 text-xs">
-                                      No disponible
-                                    </Badge>
-                                  )}
+                                  {!item.inStock && <Badge variant="destructive" className="ml-2 text-xs">Out of Stock</Badge>}
                                 </div>
-                                <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                  ${item.price}
-                                </span>
+                                <span className="font-semibold text-orange-600">${item.price}</span>
                               </div>
                             ))}
                             <p className="text-xs text-muted-foreground mt-2">
-                              💡 Usa <code className="bg-muted px-1 rounded">addToCart</code> con restaurantId=&quot;{restaurant.id}&quot;
+                              Use <code className="bg-muted px-1 rounded">addToCart</code> with restaurantId=&quot;{restaurant.id}&quot;
                             </p>
                           </div>
                         </>
@@ -498,72 +337,55 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Cart */}
-            <Card className="shadow-lg">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🛒</span>
-                  Carrito
+                  <ShoppingCart className="w-5 h-5" />
+                  Shopping Cart
                 </CardTitle>
-                <CardDescription>API Imperativa</CardDescription>
+                <CardDescription>Imperative API</CardDescription>
               </CardHeader>
               <CardContent>
                 {cart.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p className="text-4xl mb-2">🛒</p>
-                    <p>Tu carrito está vacío</p>
-                    <p className="text-sm mt-2">
-                      Usa <code className="bg-muted px-1 rounded">addToCart</code>
-                    </p>
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>Your cart is empty</p>
+                    <p className="text-sm mt-2">Use <code className="bg-muted px-1 rounded">addToCart</code> to add items</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {cart.map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-3 bg-secondary rounded-lg">
                         <div>
-                          <div className="font-medium">
-                            {item.quantity}x {item.menuItem.name}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {item.restaurant.name}
-                          </div>
+                          <div className="font-medium">{item.quantity}x {item.menuItem.name}</div>
+                          <div className="text-sm text-muted-foreground">{item.restaurant.name}</div>
                         </div>
-                        <div className="font-bold text-orange-600 dark:text-orange-400">
-                          ${(item.menuItem.price * item.quantity).toFixed(2)}
-                        </div>
+                        <div className="font-bold text-orange-600">${(item.menuItem.price * item.quantity).toFixed(2)}</div>
                       </div>
                     ))}
-
                     <Separator />
-
-                    <div className="flex justify-between text-xl font-bold pt-2">
+                    <div className="flex justify-between text-lg font-bold pt-2">
                       <span>Total:</span>
-                      <span className="text-orange-600 dark:text-orange-400">
-                        ${cartTotal.toFixed(2)}
-                      </span>
+                      <span className="text-orange-600">${cartTotal.toFixed(2)}</span>
                     </div>
-
                     <Button
-                      onClick={() => {
-                        setCart([])
-                        showNotification('🗑️ Carrito vaciado')
-                      }}
+                      onClick={() => { setCart([]); showNotification('Cart cleared') }}
                       variant="destructive"
                       className="w-full mt-4"
                     >
-                      Vaciar Carrito
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear Cart
                     </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* WebMCP Info */}
-            <Card className="shadow-lg border-blue-200 dark:border-blue-800">
+            <Card className="border-blue-200 dark:border-blue-800">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
-                  <span className="text-2xl">ℹ️</span>
-                  Herramientas WebMCP
+                  <Info className="w-5 h-5" />
+                  WebMCP Tools
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
@@ -595,17 +417,16 @@ export default function Home() {
                 </div>
                 <Separator />
                 <p className="text-xs text-muted-foreground">
-                  💡 Abre &quot;Model Context Tool Inspector&quot; para ver todas las herramientas
+                  Open &quot;Model Context Tool Inspector&quot; to see all tools
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Footer */}
         <footer className="mt-12 text-center text-sm text-muted-foreground space-y-2">
-          <p>Demo de WebMCP para &quot;Prepara tu webapp para los agentes de nuestro día a día&quot;</p>
-          <p>🤖 Hecho con WebMCP, Next.js, shadcn/ui y ❤️</p>
+          <p>WebMCP Demo for &quot;Prepara tu webapp para los agentes de nuestro día a día&quot;</p>
+          <p>Built with WebMCP, Next.js, shadcn/ui, and Tailwind CSS</p>
         </footer>
       </div>
     </div>
