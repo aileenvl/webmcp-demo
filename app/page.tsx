@@ -182,10 +182,10 @@ export default function Home() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                TacoAgent
+                FoodHub
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                WebMCP Demo - AI-Ready Food Delivery
+                WebMCP Demo - AI-Ready Restaurant Platform
               </p>
             </div>
             <Badge variant={webmcpStatus === 'available' ? 'default' : 'destructive'} className="text-sm px-4 py-2">
