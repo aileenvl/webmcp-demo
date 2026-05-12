@@ -1,0 +1,19 @@
+# Screenshots para la presentación
+
+Agrega capturas de pantalla aquí:
+
+1. **webmcp-status.png** - Indicador de WebMCP activo
+2. **search-form.png** - Formulario de búsqueda con herramienta registrada
+3. **tool-inspector.png** - Extensión mostrando herramientas disponibles
+4. **cart-demo.png** - Carrito con items agregados
+5. **visual-feedback.png** - Feedback visual con bordes azules/rojos
+6. **error-handling.png** - Mensaje de error de validación
+7. **checkout-success.png** - Confirmación de pedido
+
+## Cómo tomar las capturas:
+
+1. Abre Chrome Canary con WebMCP habilitado
+2. Navega a localhost:3000
+3. Abre la extensión Model Context Tool Inspector
+4. Usa Cmd+Shift+5 (Mac) o Windows+Shift+S (Windows) para capturar
+5. Guarda las imágenes en este directorio
