@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react'
 import { restaurants, type Restaurant, type CartItem } from '@/lib/mock-data'
 import { registerWebMCPTool, isWebMCPAvailable } from '@/lib/webmcp'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 
 export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([])
@@ -11,7 +18,6 @@ export default function Home() {
   const [webmcpStatus, setWebmcpStatus] = useState<'checking' | 'available' | 'unavailable'>('checking')
 
   useEffect(() => {
-    // Check WebMCP availability
     const available = isWebMCPAvailable()
     setWebmcpStatus(available ? 'available' : 'unavailable')
 
@@ -20,64 +26,43 @@ export default function Home() {
       return
     }
 
-    // Register imperative tools
     registerImperativeTools()
-
-    // Setup event listeners
     setupWebMCPEventListeners()
 
     return () => {
-      // Cleanup: remove event listeners
       window.removeEventListener('toolactivated', handleToolActivated)
       window.removeEventListener('toolcancel', handleToolCancel)
     }
   }, [cart])
 
   const registerImperativeTools = () => {
-    // Tool 1: Add to Cart
     registerWebMCPTool({
       name: 'addToCart',
-      description: 'Agregar un producto al carrito de compras. Usa esto cuando el usuario quiera pedir comida.',
+      description: 'Agregar un producto al carrito de compras',
       inputSchema: {
         type: 'object',
         properties: {
-          restaurantId: {
-            type: 'string',
-            description: 'ID del restaurante (ej: taco-loco, pizza-pronto, sushi-zen)'
-          },
-          menuItemId: {
-            type: 'string',
-            description: 'ID del producto del menú'
-          },
-          quantity: {
-            type: 'number',
-            description: 'Cantidad a agregar',
-            minimum: 1,
-            maximum: 10
-          }
+          restaurantId: { type: 'string', description: 'ID del restaurante' },
+          menuItemId: { type: 'string', description: 'ID del producto' },
+          quantity: { type: 'number', description: 'Cantidad', minimum: 1, maximum: 10 }
         },
         required: ['restaurantId', 'menuItemId', 'quantity']
       },
       execute: async ({ restaurantId, menuItemId, quantity }) => {
         const restaurant = restaurants.find(r => r.id === restaurantId)
         if (!restaurant) {
-          return { error: `Restaurant no encontrado: ${restaurantId}. Opciones válidas: ${restaurants.map(r => r.id).join(', ')}` }
+          return { error: `Restaurant no encontrado: ${restaurantId}` }
         }
 
         const menuItem = restaurant.menu.find(m => m.id === menuItemId)
         if (!menuItem) {
-          return { error: `Producto no encontrado: ${menuItemId}. Opciones válidas: ${restaurant.menu.map(m => m.id).join(', ')}` }
+          return { error: `Producto no encontrado: ${menuItemId}` }
         }
 
         if (!menuItem.inStock) {
-          return { error: `El producto "${menuItem.name}" no está disponible actualmente. Prueba con otro producto del menú.` }
+          return { error: `"${menuItem.name}" no está disponible` }
         }
 
-        if (quantity < 1 || quantity > 10) {
-          return { error: 'La cantidad debe estar entre 1 y 10' }
-        }
-
-        // Add to cart
         const newItem: CartItem = {
           menuItem,
           restaurant,
@@ -86,75 +71,57 @@ export default function Home() {
         }
 
         setCart(prev => [...prev, newItem])
-        showNotification(`✅ ${quantity}x ${menuItem.name} agregado al carrito`)
+        showNotification(`✅ ${quantity}x ${menuItem.name} agregado`)
 
         return {
           success: true,
-          message: `${quantity}x ${menuItem.name} agregado al carrito. Total de items: ${cart.length + 1}`,
-          cartTotal: cart.length + 1
+          message: `${quantity}x ${menuItem.name} agregado al carrito`
         }
       }
     })
 
-    // Tool 2: View Cart
     registerWebMCPTool({
       name: 'viewCart',
-      description: 'Ver el contenido actual del carrito de compras',
-      inputSchema: {
-        type: 'object',
-        properties: {}
-      },
+      description: 'Ver contenido del carrito',
+      inputSchema: { type: 'object', properties: {} },
       execute: async () => {
         if (cart.length === 0) {
-          return { message: 'El carrito está vacío. Usa addToCart para agregar productos.' }
+          return { message: 'Carrito vacío' }
         }
 
         const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
-        const items = cart.map(item => ({
-          name: item.menuItem.name,
-          quantity: item.quantity,
-          price: item.menuItem.price,
-          subtotal: item.menuItem.price * item.quantity
-        }))
-
         return {
-          items,
+          items: cart.map(item => ({
+            name: item.menuItem.name,
+            quantity: item.quantity,
+            price: item.menuItem.price,
+            subtotal: item.menuItem.price * item.quantity
+          })),
           total: total.toFixed(2),
           itemCount: cart.length
         }
       }
     })
 
-    // Tool 3: Clear Cart
     registerWebMCPTool({
       name: 'clearCart',
-      description: 'Vaciar el carrito de compras completamente',
-      inputSchema: {
-        type: 'object',
-        properties: {}
-      },
+      description: 'Vaciar el carrito',
+      inputSchema: { type: 'object', properties: {} },
       execute: async () => {
         const itemCount = cart.length
         setCart([])
         showNotification('🗑️ Carrito vaciado')
-        return {
-          success: true,
-          message: `Carrito vaciado. ${itemCount} items removidos.`
-        }
+        return { success: true, message: `${itemCount} items removidos` }
       }
     })
 
-    // Tool 4: Get Restaurant Info
     registerWebMCPTool({
       name: 'getRestaurantInfo',
-      description: 'Obtener información detallada de un restaurante y su menú',
+      description: 'Obtener info de un restaurante',
       inputSchema: {
         type: 'object',
         properties: {
-          restaurantId: {
-            type: 'string',
-            description: 'ID del restaurante'
-          }
+          restaurantId: { type: 'string', description: 'ID del restaurante' }
         },
         required: ['restaurantId']
       },
@@ -188,12 +155,10 @@ export default function Home() {
   }
 
   const handleToolActivated = (event: any) => {
-    console.log('🤖 Tool activated:', event.detail?.toolName)
     showNotification(`🤖 Agent usando: ${event.detail?.toolName || 'herramienta'}`)
   }
 
   const handleToolCancel = (event: any) => {
-    console.log('❌ Tool cancelled:', event.detail?.toolName)
     showNotification(`❌ Operación cancelada`)
   }
 
@@ -203,45 +168,37 @@ export default function Home() {
   }
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Check if invoked by agent
     const event = e.nativeEvent as any
+    e.preventDefault()
+
+    const formData = new FormData(e.currentTarget)
+    const cuisine = formData.get('cuisine') as string
+    const priceRange = formData.get('priceRange') as string
+
+    let filtered = restaurants
+    if (cuisine && cuisine !== 'all') {
+      filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
+    }
+    if (priceRange && priceRange !== 'all') {
+      filtered = filtered.filter(r => r.priceRange === priceRange)
+    }
+
+    const response = {
+      results: filtered.map(r => ({
+        id: r.id,
+        name: r.name,
+        cuisine: r.cuisine,
+        priceRange: r.priceRange,
+        rating: r.rating
+      }))
+    }
+
     if (event.agentInvoked) {
-      console.log('🤖 Form submitted by agent')
-      e.preventDefault()
-
-      // Extract form data
-      const formData = new FormData(e.currentTarget)
-      const cuisine = formData.get('cuisine') as string
-      const priceRange = formData.get('priceRange') as string
-
-      // Filter restaurants
-      let filtered = restaurants
-      if (cuisine && cuisine !== 'all') {
-        filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
-      }
-      if (priceRange && priceRange !== 'all') {
-        filtered = filtered.filter(r => r.priceRange === priceRange)
-      }
-
-      // Respond to agent
-      const response = {
-        results: filtered.map(r => ({
-          id: r.id,
-          name: r.name,
-          cuisine: r.cuisine,
-          priceRange: r.priceRange,
-          rating: r.rating,
-          deliveryTime: r.deliveryTime
-        }))
-      }
-
       // @ts-ignore
       event.respondWith(response)
-      showNotification(`✅ Búsqueda completada: ${filtered.length} restaurantes`)
-    } else {
-      e.preventDefault()
-      showNotification('🔍 Búsqueda ejecutada por humano')
     }
+
+    showNotification(`✅ ${filtered.length} restaurantes encontrados`)
   }
 
   const handleCheckoutSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -254,12 +211,12 @@ export default function Home() {
     const phone = formData.get('phone') as string
 
     if (!name || !address || !phone) {
-      showNotification('❌ Todos los campos son requeridos')
+      showNotification('❌ Campos requeridos')
       return
     }
 
     if (cart.length === 0) {
-      showNotification('❌ El carrito está vacío')
+      showNotification('❌ Carrito vacío')
       return
     }
 
@@ -271,7 +228,7 @@ export default function Home() {
       orderId,
       total: total.toFixed(2),
       estimatedDelivery: '30-40 min',
-      message: `Pedido confirmado para ${name}. Se entregará en ${address}.`
+      message: `Pedido confirmado para ${name}`
     }
 
     if (event.agentInvoked) {
@@ -284,357 +241,373 @@ export default function Home() {
     e.currentTarget.reset()
   }
 
+  const cartTotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-gray-900 dark:to-gray-800 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Notification */}
       {notification && (
-        <div className="tool-notification">
-          {notification}
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right">
+          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950">
+            <CardContent className="pt-6">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{notification}</p>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* Header */}
-      <header className="max-w-6xl mx-auto mb-12">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-2">
-              🌮 TacoAgent
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Demo de WebMCP - Food Delivery con IA
-            </p>
-          </div>
-          <div className="text-right">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-              webmcpStatus === 'available'
-                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
-                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${
-                webmcpStatus === 'available' ? 'bg-green-500' : 'bg-red-500'
-              }`}></span>
-              <span className="font-semibold">
-                {webmcpStatus === 'checking' && 'Verificando WebMCP...'}
-                {webmcpStatus === 'available' && 'WebMCP Activo'}
-                {webmcpStatus === 'unavailable' && 'WebMCP No Disponible'}
-              </span>
-            </div>
-            {webmcpStatus === 'unavailable' && (
-              <p className="text-sm text-gray-500 mt-2">
-                Habilita chrome://flags/#enable-webmcp-testing
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+                <span className="text-6xl">🌮</span>
+                TacoAgent
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300">
+                Demo de WebMCP - Food Delivery con IA
               </p>
-            )}
+            </div>
+            <Badge
+              variant={webmcpStatus === 'available' ? 'default' : 'destructive'}
+              className="text-sm px-4 py-2"
+            >
+              <span className={`w-2 h-2 rounded-full mr-2 ${
+                webmcpStatus === 'available' ? 'bg-green-400' : 'bg-red-400'
+              } animate-pulse`}></span>
+              {webmcpStatus === 'checking' && 'Verificando...'}
+              {webmcpStatus === 'available' && 'WebMCP Activo'}
+              {webmcpStatus === 'unavailable' && 'WebMCP No Disponible'}
+            </Badge>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
-        {/* Left Column - Forms (Declarative API) */}
-        <div className="space-y-8">
-          {/* Restaurant Search Form - Declarative API */}
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              🔍 Buscar Restaurantes
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              API Declarativa (HTML)
-            </p>
-
-            <form
-              onSubmit={handleSearchSubmit}
-              toolname="searchRestaurants"
-              tooldescription="Buscar restaurantes por tipo de cocina y rango de precio"
-              className="space-y-4"
-            >
-              <div>
-                <label htmlFor="cuisine" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tipo de Cocina
-                </label>
-                <select
-                  id="cuisine"
-                  name="cuisine"
-                  toolparamdescription="Tipo de cocina del restaurante"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Search Form */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🔍</span>
+                  Buscar Restaurantes
+                </CardTitle>
+                <CardDescription>API Declarativa (HTML)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handleSearchSubmit}
+                  toolname="searchRestaurants"
+                  tooldescription="Buscar restaurantes por cocina y precio"
+                  className="space-y-4"
                 >
-                  <option value="all">Todas</option>
-                  <option value="mexicana">Mexicana</option>
-                  <option value="italiana">Italiana</option>
-                  <option value="japonesa">Japonesa</option>
-                </select>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cuisine">Tipo de Cocina</Label>
+                    <Select name="cuisine" defaultValue="all">
+                      <SelectTrigger id="cuisine">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="mexicana">Mexicana</SelectItem>
+                        <SelectItem value="italiana">Italiana</SelectItem>
+                        <SelectItem value="japonesa">Japonesa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div>
-                <label htmlFor="priceRange" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Rango de Precio
-                </label>
-                <select
-                  id="priceRange"
-                  name="priceRange"
-                  toolparamdescription="Rango de precio del restaurante ($ económico, $$ medio, $$$ caro)"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  <div className="space-y-2">
+                    <Label htmlFor="priceRange">Rango de Precio</Label>
+                    <Select name="priceRange" defaultValue="all">
+                      <SelectTrigger id="priceRange">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="$">$ - Económico</SelectItem>
+                        <SelectItem value="$$">$$ - Medio</SelectItem>
+                        <SelectItem value="$$$">$$$ - Caro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button type="submit" className="w-full" size="lg">
+                    Buscar Restaurantes
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Checkout Form */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🛒</span>
+                  Finalizar Pedido
+                </CardTitle>
+                <CardDescription>API Declarativa + Validación</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handleCheckoutSubmit}
+                  toolname="checkout"
+                  tooldescription="Finalizar pedido con info de entrega"
+                  className="space-y-4"
                 >
-                  <option value="all">Todos</option>
-                  <option value="$">$ - Económico</option>
-                  <option value="$$">$$ - Medio</option>
-                  <option value="$$$">$$$ - Caro</option>
-                </select>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nombre Completo *</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Juan Pérez"
+                      required
+                      toolparamdescription="Nombre completo"
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                Buscar Restaurantes
-              </button>
-            </form>
-          </section>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Dirección de Entrega *</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      placeholder="Av. Corrientes 1234, CABA"
+                      required
+                      toolparamdescription="Dirección completa"
+                    />
+                  </div>
 
-          {/* Checkout Form - Declarative API with validation */}
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              🛒 Finalizar Pedido
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              API Declarativa + Validación
-            </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono *</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="+54 11 1234-5678"
+                      required
+                      toolparamdescription="Número de teléfono"
+                    />
+                  </div>
 
-            <form
-              onSubmit={handleCheckoutSubmit}
-              toolname="checkout"
-              tooldescription="Finalizar el pedido con información de entrega. El carrito debe tener al menos un item."
-              className="space-y-4"
-            >
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nombre Completo *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  toolparamdescription="Nombre completo de la persona que recibe"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Juan Pérez"
-                />
-              </div>
+                  <Separator />
 
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Dirección de Entrega *
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  required
-                  toolparamdescription="Dirección completa donde se entregará el pedido"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Av. Corrientes 1234, CABA"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Teléfono *
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  required
-                  toolparamdescription="Número de teléfono para contacto"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="+54 11 1234-5678"
-                />
-              </div>
-
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">Items en carrito:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{cart.length}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold">
-                  <span className="text-gray-900 dark:text-white">Total:</span>
-                  <span className="text-orange-600 dark:text-orange-400">
-                    ${cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={cart.length === 0}
-                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                {cart.length === 0 ? 'Carrito Vacío' : 'Confirmar Pedido'}
-              </button>
-            </form>
-          </section>
-        </div>
-
-        {/* Right Column - Restaurant List & Cart */}
-        <div className="space-y-8">
-          {/* Restaurant List */}
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              🍽️ Restaurantes Disponibles
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Usa API Imperativa para agregar al carrito
-            </p>
-
-            <div className="space-y-4">
-              {restaurants.map(restaurant => (
-                <div
-                  key={restaurant.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-orange-500 transition-colors cursor-pointer"
-                  onClick={() => setSelectedRestaurant(restaurant)}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{restaurant.image}</span>
-                      <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white">{restaurant.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {restaurant.cuisine} • {restaurant.priceRange}
-                        </p>
-                      </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Items:</span>
+                      <span className="font-semibold">{cart.length}</span>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-orange-600">⭐ {restaurant.rating}</div>
-                      <div className="text-xs text-gray-500">{restaurant.deliveryTime}</div>
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total:</span>
+                      <span className="text-orange-600 dark:text-orange-400">
+                        ${cartTotal.toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
-                  {selectedRestaurant?.id === restaurant.id && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">Menú:</h4>
-                      <div className="space-y-2">
-                        {restaurant.menu.map(item => (
-                          <div
-                            key={item.id}
-                            className={`flex justify-between items-center text-sm p-2 rounded ${
-                              item.inStock
-                                ? 'bg-gray-50 dark:bg-gray-700'
-                                : 'bg-red-50 dark:bg-red-900/20 opacity-60'
-                            }`}
-                          >
-                            <div>
-                              <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
-                              {!item.inStock && (
-                                <span className="ml-2 text-xs text-red-600 dark:text-red-400">(No disponible)</span>
-                              )}
-                            </div>
-                            <span className="text-orange-600 dark:text-orange-400 font-semibold">
-                              ${item.price}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                        💡 Tip para agentes: usa <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">addToCart</code> con restaurantId=&quot;{restaurant.id}&quot;
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Cart */}
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              🛒 Carrito
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              API Imperativa: viewCart, clearCart
-            </p>
-
-            {cart.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p className="text-4xl mb-2">🛒</p>
-                <p>Tu carrito está vacío</p>
-                <p className="text-sm mt-2">
-                  Usa <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">addToCart</code> para agregar items
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {cart.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={cart.length === 0}
+                    variant={cart.length === 0 ? 'secondary' : 'default'}
                   >
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {item.quantity}x {item.menuItem.name}
+                    {cart.length === 0 ? 'Carrito Vacío' : 'Confirmar Pedido'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Restaurants */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🍽️</span>
+                  Restaurantes Disponibles
+                </CardTitle>
+                <CardDescription>Click para ver menú</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {restaurants.map(restaurant => (
+                  <Card
+                    key={restaurant.id}
+                    className="cursor-pointer hover:border-orange-500 transition-colors"
+                    onClick={() => setSelectedRestaurant(
+                      selectedRestaurant?.id === restaurant.id ? null : restaurant
+                    )}
+                  >
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl">{restaurant.image}</span>
+                          <div>
+                            <h3 className="font-bold text-lg">{restaurant.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {restaurant.cuisine} • {restaurant.priceRange}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="secondary" className="mb-1">
+                            ⭐ {restaurant.rating}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">
+                            {restaurant.deliveryTime}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {item.restaurant.name}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-orange-600 dark:text-orange-400">
-                        ${(item.menuItem.price * item.quantity).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
+
+                      {selectedRestaurant?.id === restaurant.id && (
+                        <>
+                          <Separator className="my-3" />
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm mb-2">Menú:</h4>
+                            {restaurant.menu.map(item => (
+                              <div
+                                key={item.id}
+                                className={`flex justify-between items-center p-2 rounded text-sm ${
+                                  item.inStock
+                                    ? 'bg-secondary'
+                                    : 'bg-destructive/10 opacity-60'
+                                }`}
+                              >
+                                <div>
+                                  <span className="font-medium">{item.name}</span>
+                                  {!item.inStock && (
+                                    <Badge variant="destructive" className="ml-2 text-xs">
+                                      No disponible
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                  ${item.price}
+                                </span>
+                              </div>
+                            ))}
+                            <p className="text-xs text-muted-foreground mt-2">
+                              💡 Usa <code className="bg-muted px-1 rounded">addToCart</code> con restaurantId=&quot;{restaurant.id}&quot;
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
+              </CardContent>
+            </Card>
 
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-                  <div className="flex justify-between text-xl font-bold">
-                    <span className="text-gray-900 dark:text-white">Total:</span>
-                    <span className="text-orange-600 dark:text-orange-400">
-                      ${cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0).toFixed(2)}
-                    </span>
+            {/* Cart */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🛒</span>
+                  Carrito
+                </CardTitle>
+                <CardDescription>API Imperativa</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cart.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-4xl mb-2">🛒</p>
+                    <p>Tu carrito está vacío</p>
+                    <p className="text-sm mt-2">
+                      Usa <code className="bg-muted px-1 rounded">addToCart</code>
+                    </p>
                   </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                        <div>
+                          <div className="font-medium">
+                            {item.quantity}x {item.menuItem.name}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {item.restaurant.name}
+                          </div>
+                        </div>
+                        <div className="font-bold text-orange-600 dark:text-orange-400">
+                          ${(item.menuItem.price * item.quantity).toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+
+                    <Separator />
+
+                    <div className="flex justify-between text-xl font-bold pt-2">
+                      <span>Total:</span>
+                      <span className="text-orange-600 dark:text-orange-400">
+                        ${cartTotal.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        setCart([])
+                        showNotification('🗑️ Carrito vaciado')
+                      }}
+                      variant="destructive"
+                      className="w-full mt-4"
+                    >
+                      Vaciar Carrito
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* WebMCP Info */}
+            <Card className="shadow-lg border-blue-200 dark:border-blue-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
+                  <span className="text-2xl">ℹ️</span>
+                  Herramientas WebMCP
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="space-y-1">
+                  <p className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">HTML</Badge>
+                    <span className="font-medium">searchRestaurants</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">HTML</Badge>
+                    <span className="font-medium">checkout</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <span className="font-medium">addToCart</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <span className="font-medium">viewCart</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <span className="font-medium">clearCart</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <span className="font-medium">getRestaurantInfo</span>
+                  </p>
                 </div>
-
-                <button
-                  onClick={() => {
-                    setCart([])
-                    showNotification('🗑️ Carrito vaciado')
-                  }}
-                  className="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                >
-                  Vaciar Carrito
-                </button>
-              </div>
-            )}
-          </section>
-
-          {/* Info Panel */}
-          <section className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl shadow-lg p-8 border-2 border-blue-200 dark:border-blue-800">
-            <h2 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-4">
-              ℹ️ Herramientas WebMCP Registradas
-            </h2>
-            <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-              <li>✅ <strong>searchRestaurants</strong> - Declarativa (form)</li>
-              <li>✅ <strong>checkout</strong> - Declarativa (form)</li>
-              <li>✅ <strong>addToCart</strong> - Imperativa (JS)</li>
-              <li>✅ <strong>viewCart</strong> - Imperativa (JS)</li>
-              <li>✅ <strong>clearCart</strong> - Imperativa (JS)</li>
-              <li>✅ <strong>getRestaurantInfo</strong> - Imperativa (JS)</li>
-            </ul>
-            <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                💡 Abre la extensión &quot;Model Context Tool Inspector&quot; para ver todas las herramientas disponibles
-              </p>
-            </div>
-          </section>
+                <Separator />
+                <p className="text-xs text-muted-foreground">
+                  💡 Abre &quot;Model Context Tool Inspector&quot; para ver todas las herramientas
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <footer className="max-w-6xl mx-auto mt-12 text-center text-sm text-gray-600 dark:text-gray-400">
-        <p>
-          Demo de WebMCP para la charla &quot;Prepara tu webapp para los agentes de nuestro día a día&quot;
-        </p>
-        <p className="mt-2">
-          🤖 Hecho con WebMCP, Next.js y ❤️
-        </p>
-      </footer>
+        {/* Footer */}
+        <footer className="mt-12 text-center text-sm text-muted-foreground space-y-2">
+          <p>Demo de WebMCP para &quot;Prepara tu webapp para los agentes de nuestro día a día&quot;</p>
+          <p>🤖 Hecho con WebMCP, Next.js, shadcn/ui y ❤️</p>
+        </footer>
+      </div>
     </div>
   )
 }
