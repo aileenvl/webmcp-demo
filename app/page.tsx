@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Search, ShoppingCart, UtensilsCrossed, Info, Trash2, Star, Clock } from 'lucide-react'
@@ -308,34 +307,34 @@ export default function Home() {
                 <CardDescription>Declarative API (HTML)</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSearchSubmit} toolname="searchRestaurants" tooldescription="Search restaurants" className="space-y-4">
+                <form onSubmit={handleSearchSubmit} toolname="searchRestaurants" tooldescription="Search restaurants by cuisine type and price range" className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
-                    <Select name="cuisine" defaultValue="all">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="mexicana">Mexican</SelectItem>
-                        <SelectItem value="italiana">Italian</SelectItem>
-                        <SelectItem value="japonesa">Japanese</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      id="cuisine"
+                      name="cuisine"
+                      defaultValue="all"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="all">All Cuisines</option>
+                      <option value="mexicana">Mexican</option>
+                      <option value="italiana">Italian</option>
+                      <option value="japonesa">Japanese</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priceRange">Price Range</Label>
-                    <Select name="priceRange" defaultValue="all">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="$">$ - Budget</SelectItem>
-                        <SelectItem value="$$">$$ - Moderate</SelectItem>
-                        <SelectItem value="$$$">$$$ - Premium</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      id="priceRange"
+                      name="priceRange"
+                      defaultValue="all"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="all">All Prices</option>
+                      <option value="$">$ - Budget</option>
+                      <option value="$$">$$ - Moderate</option>
+                      <option value="$$$">$$$ - Premium</option>
+                    </select>
                   </div>
                   <Button type="submit" className="w-full">Search Restaurants</Button>
                 </form>
