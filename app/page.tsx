@@ -83,6 +83,12 @@ export default function Home() {
     showNotification(`🔍 Found ${filtered.length} restaurants`)
     console.log('✅ Search complete:', response)
 
+    // WebMCP requires respondWith() when preventDefault() is called
+    const nativeEvent = event.nativeEvent as any
+    if (nativeEvent.respondWith) {
+      nativeEvent.respondWith(Promise.resolve(response))
+    }
+
     return response
   }
 
@@ -99,12 +105,22 @@ export default function Home() {
 
     if (!name || !address || !phone) {
       showNotification('❌ All fields required')
-      return { success: false, error: 'All fields required: name, address, and phone number' }
+      const error = { success: false, error: 'All fields required: name, address, and phone number' }
+      const nativeEvent = event.nativeEvent as any
+      if (nativeEvent.respondWith) {
+        nativeEvent.respondWith(Promise.resolve(error))
+      }
+      return error
     }
 
     if (currentCart.length === 0) {
       showNotification('❌ Cart is empty')
-      return { success: false, error: 'Cart is empty. Use addToCart tool to add items first.' }
+      const error = { success: false, error: 'Cart is empty. Use addToCart tool to add items first.' }
+      const nativeEvent = event.nativeEvent as any
+      if (nativeEvent.respondWith) {
+        nativeEvent.respondWith(Promise.resolve(error))
+      }
+      return error
     }
 
     const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
@@ -131,6 +147,12 @@ export default function Home() {
     setCart([])
     showNotification(`✅ Order ${orderId} confirmed!`)
     console.log('✅ Checkout complete:', response)
+
+    // WebMCP requires respondWith() when preventDefault() is called
+    const nativeEvent = event.nativeEvent as any
+    if (nativeEvent.respondWith) {
+      nativeEvent.respondWith(Promise.resolve(response))
+    }
 
     return response
   }
