@@ -135,12 +135,13 @@ export default function Home() {
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const event = e.nativeEvent as any
-    e.preventDefault()
 
+    // Extract form data
     const formData = new FormData(e.currentTarget)
     const cuisine = formData.get('cuisine') as string
     const priceRange = formData.get('priceRange') as string
 
+    // Filter restaurants
     let filtered = restaurants
     if (cuisine && cuisine !== 'all') {
       filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
@@ -149,46 +150,62 @@ export default function Home() {
       filtered = filtered.filter(r => r.priceRange === priceRange)
     }
 
+    // Prepare response
     const response = {
       success: true,
       count: filtered.length,
-      results: filtered.map(r => ({
+      restaurants: filtered.map(r => ({
         id: r.id,
         name: r.name,
         cuisine: r.cuisine,
         priceRange: r.priceRange,
         rating: r.rating,
         deliveryTime: r.deliveryTime
-      }))
+      })),
+      message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants`
     }
 
+    // Handle agent invocation
     if (event.agentInvoked) {
-      console.log('🤖 Agent invoked searchRestaurants, responding with:', response)
+      console.log('🤖 searchRestaurants invoked by agent')
+      console.log('📤 Sending response:', response)
+      e.preventDefault()
       // @ts-ignore
-      event.respondWith(Promise.resolve(response))
+      event.respondWith(response)
+      return
     }
 
+    // Normal form submission
+    e.preventDefault()
     showNotification(`Found ${filtered.length} restaurants`)
   }
 
   const handleCheckoutSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const event = e.nativeEvent as any
-    e.preventDefault()
 
+    // Extract form data
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
     const address = formData.get('address') as string
     const phone = formData.get('phone') as string
 
+    // Validation
     if (!name || !address || !phone) {
       const errorResponse = {
         success: false,
-        error: 'All fields are required (name, address, phone)'
+        error: 'All fields required: name, address, and phone number'
       }
+
       if (event.agentInvoked) {
+        console.log('🤖 checkout invoked by agent - validation failed')
+        console.log('📤 Sending error:', errorResponse)
+        e.preventDefault()
         // @ts-ignore
-        event.respondWith(Promise.resolve(errorResponse))
+        event.respondWith(errorResponse)
+        return
       }
+
+      e.preventDefault()
       showNotification('Please fill all fields')
       return
     }
@@ -196,34 +213,58 @@ export default function Home() {
     if (cart.length === 0) {
       const errorResponse = {
         success: false,
-        error: 'Cart is empty. Add items before checkout.'
+        error: 'Cart is empty. Use addToCart tool to add items first.'
       }
+
       if (event.agentInvoked) {
+        console.log('🤖 checkout invoked by agent - cart empty')
+        console.log('📤 Sending error:', errorResponse)
+        e.preventDefault()
         // @ts-ignore
-        event.respondWith(Promise.resolve(errorResponse))
+        event.respondWith(errorResponse)
+        return
       }
+
+      e.preventDefault()
       showNotification('Cart is empty')
       return
     }
 
+    // Process order
     const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
     const orderId = `ORD-${Date.now()}`
 
     const response = {
       success: true,
       orderId,
-      total: total.toFixed(2),
-      estimatedDelivery: '30-40 min',
-      items: cart.length,
-      message: `Order ${orderId} confirmed for ${name}. Delivering to ${address}.`
+      customerName: name,
+      deliveryAddress: address,
+      phone,
+      total: `$${total.toFixed(2)}`,
+      itemCount: cart.length,
+      items: cart.map(item => ({
+        name: item.menuItem.name,
+        quantity: item.quantity,
+        price: item.menuItem.price
+      })),
+      estimatedDelivery: '30-40 minutes',
+      message: `Order ${orderId} confirmed! Delivering to ${address}`
     }
 
+    // Handle agent invocation
     if (event.agentInvoked) {
-      console.log('🤖 Agent invoked checkout, responding with:', response)
+      console.log('🤖 checkout invoked by agent')
+      console.log('📤 Sending response:', response)
+      e.preventDefault()
       // @ts-ignore
-      event.respondWith(Promise.resolve(response))
+      event.respondWith(response)
+      setCart([])
+      e.currentTarget.reset()
+      return
     }
 
+    // Normal submission
+    e.preventDefault()
     showNotification(`Order ${orderId} confirmed!`)
     setCart([])
     e.currentTarget.reset()
