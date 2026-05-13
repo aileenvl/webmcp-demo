@@ -133,10 +133,11 @@ export default function Home() {
   }
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const event = e.nativeEvent as any
+    const nativeEvent = e.nativeEvent as any
+    const formElement = e.currentTarget
 
     // Extract form data
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData(formElement)
     const cuisine = formData.get('cuisine') as string
     const priceRange = formData.get('priceRange') as string
 
@@ -172,12 +173,15 @@ export default function Home() {
     }
 
     // Handle agent invocation
-    if (event.agentInvoked) {
+    if (nativeEvent.agentInvoked) {
       console.log('🤖 searchRestaurants invoked by agent')
-      console.log('📤 Sending response:', response)
-      e.preventDefault()
+      console.log('📤 Sending response:', JSON.stringify(response, null, 2))
+
+      // Must call respondWith BEFORE preventDefault
       // @ts-ignore - respondWith requires a Promise
-      event.respondWith(Promise.resolve(response))
+      nativeEvent.respondWith(Promise.resolve(response))
+      e.preventDefault()
+      e.stopPropagation()
       return
     }
 
@@ -187,10 +191,11 @@ export default function Home() {
   }
 
   const handleCheckoutSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const event = e.nativeEvent as any
+    const nativeEvent = e.nativeEvent as any
+    const formElement = e.currentTarget
 
     // Extract form data
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData(formElement)
     const name = formData.get('name') as string
     const address = formData.get('address') as string
     const phone = formData.get('phone') as string
@@ -202,12 +207,12 @@ export default function Home() {
         error: 'All fields required: name, address, and phone number'
       }
 
-      if (event.agentInvoked) {
+      if (nativeEvent.agentInvoked) {
         console.log('🤖 checkout invoked by agent - validation failed')
         console.log('📤 Sending error:', errorResponse)
         e.preventDefault()
         // @ts-ignore - respondWith requires a Promise
-        event.respondWith(Promise.resolve(errorResponse))
+        nativeEvent.respondWith(Promise.resolve(errorResponse))
         return
       }
 
@@ -222,12 +227,12 @@ export default function Home() {
         error: 'Cart is empty. Use addToCart tool to add items first.'
       }
 
-      if (event.agentInvoked) {
+      if (nativeEvent.agentInvoked) {
         console.log('🤖 checkout invoked by agent - cart empty')
         console.log('📤 Sending error:', errorResponse)
         e.preventDefault()
         // @ts-ignore - respondWith requires a Promise
-        event.respondWith(Promise.resolve(errorResponse))
+        nativeEvent.respondWith(Promise.resolve(errorResponse))
         return
       }
 
@@ -258,14 +263,17 @@ export default function Home() {
     }
 
     // Handle agent invocation
-    if (event.agentInvoked) {
+    if (nativeEvent.agentInvoked) {
       console.log('🤖 checkout invoked by agent')
-      console.log('📤 Sending response:', response)
-      e.preventDefault()
+      console.log('📤 Sending response:', JSON.stringify(response, null, 2))
+
+      // Must call respondWith BEFORE preventDefault
       // @ts-ignore - respondWith requires a Promise
-      event.respondWith(Promise.resolve(response))
+      nativeEvent.respondWith(Promise.resolve(response))
+      e.preventDefault()
+      e.stopPropagation()
       setCart([])
-      e.currentTarget.reset()
+      formElement.reset()
       return
     }
 
