@@ -169,8 +169,8 @@ export default function Home() {
       console.log('🤖 searchRestaurants invoked by agent')
       console.log('📤 Sending response:', response)
       e.preventDefault()
-      // @ts-ignore
-      event.respondWith(response)
+      // @ts-ignore - respondWith requires a Promise
+      event.respondWith(Promise.resolve(response))
       return
     }
 
@@ -199,8 +199,8 @@ export default function Home() {
         console.log('🤖 checkout invoked by agent - validation failed')
         console.log('📤 Sending error:', errorResponse)
         e.preventDefault()
-        // @ts-ignore
-        event.respondWith(errorResponse)
+        // @ts-ignore - respondWith requires a Promise
+        event.respondWith(Promise.resolve(errorResponse))
         return
       }
 
@@ -219,8 +219,8 @@ export default function Home() {
         console.log('🤖 checkout invoked by agent - cart empty')
         console.log('📤 Sending error:', errorResponse)
         e.preventDefault()
-        // @ts-ignore
-        event.respondWith(errorResponse)
+        // @ts-ignore - respondWith requires a Promise
+        event.respondWith(Promise.resolve(errorResponse))
         return
       }
 
@@ -255,8 +255,8 @@ export default function Home() {
       console.log('🤖 checkout invoked by agent')
       console.log('📤 Sending response:', response)
       e.preventDefault()
-      // @ts-ignore
-      event.respondWith(response)
+      // @ts-ignore - respondWith requires a Promise
+      event.respondWith(Promise.resolve(response))
       setCart([])
       e.currentTarget.reset()
       return
