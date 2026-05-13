@@ -93,7 +93,7 @@ export const restaurants: Restaurant[] = [
     id: 'pizza-pronto',
     name: 'Pizza Pronto',
     cuisine: 'Italiana',
-    priceRange: '$$',
+    priceRange: '$',
     rating: 4.7,
     deliveryTime: '30-40 min',
     image: '🍕',
@@ -124,6 +124,15 @@ export const restaurants: Restaurant[] = [
         price: 18.99,
         category: 'Pizzas',
         image: '🍕',
+        inStock: true
+      },
+      {
+        id: 'lasagna',
+        name: 'Lasagna',
+        description: 'Lasagna clásica con carne, bechamel y queso parmesano',
+        price: 15.99,
+        category: 'Pasta',
+        image: '🍝',
         inStock: true
       }
     ]
