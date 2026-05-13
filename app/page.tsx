@@ -39,68 +39,15 @@ export default function Home() {
     return () => {
       window.removeEventListener('toolactivated', handleToolActivated)
       window.removeEventListener('toolcancel', handleToolCancel)
+      const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
+      if (searchForm) {
+        searchForm.removeEventListener('submit', handleSearchSubmit)
+      }
     }
   }, [cart])
 
 
   const registerImperativeTools = () => {
-    // Register searchRestaurants as imperative tool
-    registerWebMCPTool({
-      name: 'searchRestaurants',
-      description: 'Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          cuisine: {
-            type: 'string',
-            enum: ['all', 'mexicana', 'italiana', 'japonesa'],
-            description: 'Cuisine type'
-          },
-          priceRange: {
-            type: 'string',
-            enum: ['all', '$', '$$', '$$$'],
-            description: 'Price range'
-          }
-        }
-      },
-      execute: async ({ cuisine, priceRange }) => {
-        console.log('🤖 searchRestaurants called with:', { cuisine, priceRange })
-
-        let filtered = restaurants
-        if (cuisine && cuisine !== 'all') {
-          filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
-        }
-        if (priceRange && priceRange !== 'all') {
-          filtered = filtered.filter(r => r.priceRange === priceRange)
-        }
-
-        const response = {
-          success: true,
-          count: filtered.length,
-          restaurants: filtered.map(r => ({
-            id: r.id,
-            name: r.name,
-            cuisine: r.cuisine,
-            priceRange: r.priceRange,
-            rating: r.rating,
-            deliveryTime: r.deliveryTime,
-            menu: r.menu.map(item => ({
-              id: item.id,
-              name: item.name,
-              description: item.description,
-              price: item.price,
-              inStock: item.inStock
-            }))
-          })),
-          message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
-        }
-
-        console.log('📤 Returning:', response)
-        showNotification(`Found ${filtered.length} restaurants`)
-        return response
-      }
-    })
-
     // Register checkout as imperative tool
     registerWebMCPTool({
       name: 'checkout',
@@ -173,16 +120,35 @@ export default function Home() {
         required: ['restaurantId', 'menuItemId', 'quantity']
       },
       execute: async ({ restaurantId, menuItemId, quantity }) => {
+        console.log('🤖 addToCart called with:', { restaurantId, menuItemId, quantity })
+
         const restaurant = restaurants.find(r => r.id === restaurantId)
-        if (!restaurant) return { error: `Restaurant not found: ${restaurantId}` }
+        if (!restaurant) {
+          console.log('❌ Restaurant not found:', restaurantId)
+          return { success: false, error: `Restaurant not found: ${restaurantId}. Available IDs: ${restaurants.map(r => r.id).join(', ')}` }
+        }
 
         const menuItem = restaurant.menu.find(m => m.id === menuItemId)
-        if (!menuItem) return { error: `Item not found: ${menuItemId}` }
-        if (!menuItem.inStock) return { error: `${menuItem.name} is out of stock` }
+        if (!menuItem) {
+          console.log('❌ Menu item not found:', menuItemId)
+          return { success: false, error: `Item not found: ${menuItemId}. Available IDs in ${restaurant.name}: ${restaurant.menu.map(m => m.id).join(', ')}` }
+        }
 
-        setCart(prev => [...prev, { menuItem, restaurant, quantity, customizations: {} }])
-        showNotification(`Added ${quantity}x ${menuItem.name}`)
-        return { success: true, message: `${quantity}x ${menuItem.name} added to cart` }
+        if (!menuItem.inStock) {
+          console.log('❌ Item out of stock:', menuItem.name)
+          return { success: false, error: `${menuItem.name} is out of stock` }
+        }
+
+        setCart(prev => {
+          const newCart = [...prev, { menuItem, restaurant, quantity, customizations: {} }]
+          console.log('✅ Cart updated. New cart length:', newCart.length)
+          return newCart
+        })
+
+        const response = { success: true, message: `${quantity}x ${menuItem.name} added to cart`, cartCount: cart.length + 1 }
+        console.log('📤 Returning:', response)
+        showNotification(`✅ Added ${quantity}x ${menuItem.name}`)
+        return response
       }
     })
 
@@ -191,17 +157,26 @@ export default function Home() {
       description: 'View cart contents',
       inputSchema: { type: 'object', properties: {} },
       execute: async () => {
-        if (cart.length === 0) return { message: 'Cart is empty' }
-        const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
-        return {
-          items: cart.map(item => ({
+        console.log('🤖 viewCart called')
+        const currentCart = cartRef.current
+
+        if (currentCart.length === 0) {
+          console.log('📤 Cart is empty')
+          return { message: 'Cart is empty' }
+        }
+
+        const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
+        const response = {
+          items: currentCart.map(item => ({
             name: item.menuItem.name,
             quantity: item.quantity,
             price: item.menuItem.price
           })),
           total: total.toFixed(2),
-          itemCount: cart.length
+          itemCount: currentCart.length
         }
+        console.log('📤 Returning:', response)
+        return response
       }
     })
 
@@ -210,10 +185,14 @@ export default function Home() {
       description: 'Clear the shopping cart',
       inputSchema: { type: 'object', properties: {} },
       execute: async () => {
-        const itemCount = cart.length
+        console.log('🤖 clearCart called')
+        const currentCart = cartRef.current
+        const itemCount = currentCart.length
         setCart([])
-        showNotification('Cart cleared')
-        return { success: true, message: `Removed ${itemCount} items` }
+        const response = { success: true, message: `Removed ${itemCount} items` }
+        console.log('📤 Returning:', response)
+        showNotification('🗑️ Cart cleared')
+        return response
       }
     })
 
@@ -226,19 +205,29 @@ export default function Home() {
         required: ['restaurantId']
       },
       execute: async ({ restaurantId }) => {
+        console.log('🤖 getRestaurantInfo called with:', { restaurantId })
         const restaurant = restaurants.find(r => r.id === restaurantId)
-        if (!restaurant) return { error: `Restaurant not found: ${restaurantId}` }
-        return {
+
+        if (!restaurant) {
+          console.log('❌ Restaurant not found:', restaurantId)
+          return { success: false, error: `Restaurant not found: ${restaurantId}. Available IDs: ${restaurants.map(r => r.id).join(', ')}` }
+        }
+
+        const response = {
+          success: true,
           name: restaurant.name,
           cuisine: restaurant.cuisine,
           rating: restaurant.rating,
           menu: restaurant.menu.map(i => ({
             id: i.id,
             name: i.name,
+            description: i.description,
             price: i.price,
             inStock: i.inStock
           }))
         }
+        console.log('📤 Returning:', response)
+        return response
       }
     })
   }
@@ -246,14 +235,66 @@ export default function Home() {
   const setupWebMCPEventListeners = () => {
     window.addEventListener('toolactivated', handleToolActivated)
     window.addEventListener('toolcancel', handleToolCancel)
+
+    // Handle search form declaratively
+    const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
+    if (searchForm) {
+      searchForm.addEventListener('submit', handleSearchSubmit)
+    }
   }
 
-  const handleToolActivated = () => showNotification('AI Agent is active')
-  const handleToolCancel = () => showNotification('Operation cancelled')
+  const handleSearchSubmit = (e: Event) => {
+    e.preventDefault()
+    console.log('🤖 searchRestaurants form submitted')
+
+    const formData = new FormData(e.target as HTMLFormElement)
+    const cuisine = formData.get('cuisine') as string
+    const priceRange = formData.get('priceRange') as string
+
+    let filtered = restaurants
+    if (cuisine && cuisine !== 'all') {
+      filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
+    }
+    if (priceRange && priceRange !== 'all') {
+      filtered = filtered.filter(r => r.priceRange === priceRange)
+    }
+
+    const response = {
+      success: true,
+      count: filtered.length,
+      restaurants: filtered.map(r => ({
+        id: r.id,
+        name: r.name,
+        cuisine: r.cuisine,
+        priceRange: r.priceRange,
+        rating: r.rating,
+        deliveryTime: r.deliveryTime,
+        menu: r.menu.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          inStock: item.inStock
+        }))
+      })),
+      message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
+    }
+
+    console.log('📤 Search returning:', response)
+    showNotification(`🔍 Found ${filtered.length} restaurants`)
+
+    if ('respondWith' in e) {
+      ;(e as any).respondWith(Promise.resolve(response))
+    }
+  }
+
+  const handleToolActivated = () => showNotification('🤖 AI Agent is active')
+  const handleToolCancel = () => showNotification('⚠️ Operation cancelled')
 
   const showNotification = (message: string) => {
+    console.log('🔔 Notification:', message)
     setNotification(message)
-    setTimeout(() => setNotification(null), 3000)
+    setTimeout(() => setNotification(null), 5000)
   }
 
 
@@ -262,7 +303,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800">
       {notification && (
-        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg animate-in slide-in-from-right">
+        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-8 py-4 rounded-lg shadow-2xl animate-in slide-in-from-right text-lg font-semibold border-2 border-blue-400">
           {notification}
         </div>
       )}
@@ -278,9 +319,19 @@ export default function Home() {
                 WebMCP Demo - AI-Ready Restaurant Platform
               </p>
             </div>
-            <Badge variant={webmcpStatus === 'available' ? 'default' : 'destructive'} className="text-sm px-4 py-2">
-              {webmcpStatus === 'available' ? 'WebMCP Active' : 'WebMCP Unavailable'}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <ShoppingCart className="w-8 h-8 text-orange-600" />
+                {cart.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white px-2 py-1 text-xs font-bold min-w-[24px] h-6 flex items-center justify-center animate-pulse">
+                    {cart.length}
+                  </Badge>
+                )}
+              </div>
+              <Badge variant={webmcpStatus === 'available' ? 'default' : 'destructive'} className="text-sm px-4 py-2">
+                {webmcpStatus === 'available' ? 'WebMCP Active' : 'WebMCP Unavailable'}
+              </Badge>
+            </div>
           </div>
         </header>
 
@@ -292,10 +343,14 @@ export default function Home() {
                   <Search className="w-5 h-5" />
                   Search Restaurants
                 </CardTitle>
-                <CardDescription>Imperative API (JS) - UI for manual search</CardDescription>
+                <CardDescription>Declarative API (HTML) - AI agents can use this form</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4">
+                <form
+                  className="space-y-4"
+                  toolname="searchRestaurants"
+                  tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering."
+                >
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
                     <select
@@ -481,7 +536,7 @@ export default function Home() {
               <CardContent className="space-y-2 text-sm">
                 <div className="space-y-1">
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <Badge variant="outline" className="text-xs">HTML</Badge>
                     <span className="font-medium">searchRestaurants</span>
                   </p>
                   <p className="flex items-center gap-2">
