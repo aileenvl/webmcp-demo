@@ -134,7 +134,9 @@ export default function Home() {
   }
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const event = e.nativeEvent as any
     e.preventDefault()
+
     const formData = new FormData(e.currentTarget)
     const cuisine = formData.get('cuisine') as string
     const priceRange = formData.get('priceRange') as string
@@ -147,21 +149,81 @@ export default function Home() {
       filtered = filtered.filter(r => r.priceRange === priceRange)
     }
 
+    const response = {
+      success: true,
+      count: filtered.length,
+      results: filtered.map(r => ({
+        id: r.id,
+        name: r.name,
+        cuisine: r.cuisine,
+        priceRange: r.priceRange,
+        rating: r.rating,
+        deliveryTime: r.deliveryTime
+      }))
+    }
+
+    if (event.agentInvoked) {
+      console.log('🤖 Agent invoked searchRestaurants, responding with:', response)
+      // @ts-ignore
+      event.respondWith(Promise.resolve(response))
+    }
+
     showNotification(`Found ${filtered.length} restaurants`)
   }
 
   const handleCheckoutSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const event = e.nativeEvent as any
     e.preventDefault()
+
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
     const address = formData.get('address') as string
+    const phone = formData.get('phone') as string
 
-    if (!name || !address || cart.length === 0) {
-      showNotification('Please fill all fields and add items to cart')
+    if (!name || !address || !phone) {
+      const errorResponse = {
+        success: false,
+        error: 'All fields are required (name, address, phone)'
+      }
+      if (event.agentInvoked) {
+        // @ts-ignore
+        event.respondWith(Promise.resolve(errorResponse))
+      }
+      showNotification('Please fill all fields')
       return
     }
 
+    if (cart.length === 0) {
+      const errorResponse = {
+        success: false,
+        error: 'Cart is empty. Add items before checkout.'
+      }
+      if (event.agentInvoked) {
+        // @ts-ignore
+        event.respondWith(Promise.resolve(errorResponse))
+      }
+      showNotification('Cart is empty')
+      return
+    }
+
+    const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
     const orderId = `ORD-${Date.now()}`
+
+    const response = {
+      success: true,
+      orderId,
+      total: total.toFixed(2),
+      estimatedDelivery: '30-40 min',
+      items: cart.length,
+      message: `Order ${orderId} confirmed for ${name}. Delivering to ${address}.`
+    }
+
+    if (event.agentInvoked) {
+      console.log('🤖 Agent invoked checkout, responding with:', response)
+      // @ts-ignore
+      event.respondWith(Promise.resolve(response))
+    }
+
     showNotification(`Order ${orderId} confirmed!`)
     setCart([])
     e.currentTarget.reset()
