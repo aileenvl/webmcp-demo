@@ -39,15 +39,68 @@ export default function Home() {
     return () => {
       window.removeEventListener('toolactivated', handleToolActivated)
       window.removeEventListener('toolcancel', handleToolCancel)
-      const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
-      if (searchForm) {
-        searchForm.removeEventListener('submit', handleSearchSubmit, true)
-      }
     }
   }, [cart])
 
 
   const registerImperativeTools = () => {
+    // Register searchRestaurants as imperative tool
+    registerWebMCPTool({
+      name: 'searchRestaurants',
+      description: 'Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          cuisine: {
+            type: 'string',
+            enum: ['all', 'mexicana', 'italiana', 'japonesa'],
+            description: 'Cuisine type'
+          },
+          priceRange: {
+            type: 'string',
+            enum: ['all', '$', '$$', '$$$'],
+            description: 'Price range'
+          }
+        }
+      },
+      execute: async ({ cuisine, priceRange }) => {
+        console.log('🤖 searchRestaurants called with:', { cuisine, priceRange })
+
+        let filtered = restaurants
+        if (cuisine && cuisine !== 'all') {
+          filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
+        }
+        if (priceRange && priceRange !== 'all') {
+          filtered = filtered.filter(r => r.priceRange === priceRange)
+        }
+
+        const response = {
+          success: true,
+          count: filtered.length,
+          restaurants: filtered.map(r => ({
+            id: r.id,
+            name: r.name,
+            cuisine: r.cuisine,
+            priceRange: r.priceRange,
+            rating: r.rating,
+            deliveryTime: r.deliveryTime,
+            menu: r.menu.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              price: item.price,
+              inStock: item.inStock
+            }))
+          })),
+          message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
+        }
+
+        console.log('📤 Returning:', response)
+        showNotification(`🔍 Found ${filtered.length} restaurants`)
+        return response
+      }
+    })
+
     // Register checkout as imperative tool
     registerWebMCPTool({
       name: 'checkout',
@@ -235,66 +288,6 @@ export default function Home() {
   const setupWebMCPEventListeners = () => {
     window.addEventListener('toolactivated', handleToolActivated)
     window.addEventListener('toolcancel', handleToolCancel)
-
-    // Wait for DOM to be ready
-    setTimeout(() => {
-      const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
-      console.log('🔍 Setting up declarative form, found:', searchForm)
-      if (searchForm) {
-        searchForm.addEventListener('submit', handleSearchSubmit, true)
-      }
-    }, 100)
-  }
-
-  const handleSearchSubmit = (e: Event) => {
-    console.log('🤖 searchRestaurants form submit event fired!', e)
-    e.preventDefault()
-    e.stopPropagation()
-
-    const formData = new FormData(e.target as HTMLFormElement)
-    const cuisine = formData.get('cuisine') as string || 'all'
-    const priceRange = formData.get('priceRange') as string || 'all'
-
-    console.log('📥 Form data:', { cuisine, priceRange })
-
-    let filtered = restaurants
-    if (cuisine && cuisine !== 'all') {
-      filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
-    }
-    if (priceRange && priceRange !== 'all') {
-      filtered = filtered.filter(r => r.priceRange === priceRange)
-    }
-
-    const response = {
-      success: true,
-      count: filtered.length,
-      restaurants: filtered.map(r => ({
-        id: r.id,
-        name: r.name,
-        cuisine: r.cuisine,
-        priceRange: r.priceRange,
-        rating: r.rating,
-        deliveryTime: r.deliveryTime,
-        menu: r.menu.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          inStock: item.inStock
-        }))
-      })),
-      message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
-    }
-
-    console.log('📤 Search returning:', response)
-    showNotification(`🔍 Found ${filtered.length} restaurants`)
-
-    if ('respondWith' in e) {
-      console.log('✅ Calling respondWith')
-      ;(e as any).respondWith(Promise.resolve(response))
-    } else {
-      console.warn('⚠️ No respondWith method on event')
-    }
   }
 
   const handleToolActivated = () => showNotification('🤖 AI Agent is active')
@@ -352,14 +345,10 @@ export default function Home() {
                   <Search className="w-5 h-5" />
                   Search Restaurants
                 </CardTitle>
-                <CardDescription>Declarative API (HTML) - AI agents can use this form</CardDescription>
+                <CardDescription>Imperative API (JS) - UI for manual search</CardDescription>
               </CardHeader>
               <CardContent>
-                <form
-                  className="space-y-4"
-                  toolname="searchRestaurants"
-                  tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering."
-                >
+                <form className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
                     <select
@@ -545,7 +534,7 @@ export default function Home() {
               <CardContent className="space-y-2 text-sm">
                 <div className="space-y-1">
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">HTML</Badge>
+                    <Badge variant="outline" className="text-xs">JS</Badge>
                     <span className="font-medium">searchRestaurants</span>
                   </p>
                   <p className="flex items-center gap-2">
