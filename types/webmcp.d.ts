@@ -5,6 +5,7 @@ declare namespace React {
   interface FormHTMLAttributes<T> {
     toolname?: string
     tooldescription?: string
+    toolautosubmit?: string | boolean
   }
 
   interface InputHTMLAttributes<T> {

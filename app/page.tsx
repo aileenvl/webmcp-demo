@@ -43,123 +43,99 @@ export default function Home() {
   }, [cart])
 
 
+  const handleSearchSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const cuisine = formData.get('cuisine') as string
+    const priceRange = formData.get('priceRange') as string
+
+    console.log('🔍 searchRestaurants submitted:', { cuisine, priceRange })
+
+    let filtered = restaurants
+    if (cuisine && cuisine !== 'all') {
+      filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
+    }
+    if (priceRange && priceRange !== 'all') {
+      filtered = filtered.filter(r => r.priceRange === priceRange)
+    }
+
+    const response = {
+      success: true,
+      count: filtered.length,
+      restaurants: filtered.map(r => ({
+        id: r.id,
+        name: r.name,
+        cuisine: r.cuisine,
+        priceRange: r.priceRange,
+        rating: r.rating,
+        deliveryTime: r.deliveryTime,
+        menu: r.menu.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          inStock: item.inStock
+        }))
+      })),
+      message: `Found ${filtered.length} restaurants`
+    }
+
+    showNotification(`🔍 Found ${filtered.length} restaurants`)
+    console.log('✅ Search complete:', response)
+
+    return response
+  }
+
+  const handleCheckoutSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const name = formData.get('name') as string
+    const address = formData.get('address') as string
+    const phone = formData.get('phone') as string
+
+    console.log('📦 checkout submitted:', { name, address, phone })
+
+    const currentCart = cartRef.current
+
+    if (!name || !address || !phone) {
+      showNotification('❌ All fields required')
+      return { success: false, error: 'All fields required: name, address, and phone number' }
+    }
+
+    if (currentCart.length === 0) {
+      showNotification('❌ Cart is empty')
+      return { success: false, error: 'Cart is empty. Use addToCart tool to add items first.' }
+    }
+
+    const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
+    const orderId = `ORD-${Date.now()}`
+
+    const response = {
+      success: true,
+      orderId,
+      customerName: name,
+      deliveryAddress: address,
+      phone,
+      total: `$${total.toFixed(2)}`,
+      itemCount: currentCart.length,
+      items: currentCart.map(item => ({
+        name: item.menuItem.name,
+        quantity: item.quantity,
+        price: item.menuItem.price
+      })),
+      estimatedDelivery: '30-40 minutes',
+      message: `Order ${orderId} confirmed!`
+    }
+
+    // Clear cart and show notification
+    setCart([])
+    showNotification(`✅ Order ${orderId} confirmed!`)
+    console.log('✅ Checkout complete:', response)
+
+    return response
+  }
+
   const registerImperativeTools = () => {
-    // Register searchRestaurants as imperative tool
-    registerWebMCPTool({
-      name: 'searchRestaurants',
-      description: 'Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          cuisine: {
-            type: 'string',
-            enum: ['all', 'mexicana', 'italiana', 'japonesa'],
-            description: 'Cuisine type'
-          },
-          priceRange: {
-            type: 'string',
-            enum: ['all', '$', '$$', '$$$'],
-            description: 'Price range'
-          }
-        }
-      },
-      execute: async ({ cuisine, priceRange }) => {
-        console.log('🤖 searchRestaurants called with:', { cuisine, priceRange })
-
-        let filtered = restaurants
-        if (cuisine && cuisine !== 'all') {
-          filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
-        }
-        if (priceRange && priceRange !== 'all') {
-          filtered = filtered.filter(r => r.priceRange === priceRange)
-        }
-
-        const response = {
-          success: true,
-          count: filtered.length,
-          restaurants: filtered.map(r => ({
-            id: r.id,
-            name: r.name,
-            cuisine: r.cuisine,
-            priceRange: r.priceRange,
-            rating: r.rating,
-            deliveryTime: r.deliveryTime,
-            menu: r.menu.map(item => ({
-              id: item.id,
-              name: item.name,
-              description: item.description,
-              price: item.price,
-              inStock: item.inStock
-            }))
-          })),
-          message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
-        }
-
-        console.log('📤 Returning:', response)
-        showNotification(`🔍 Found ${filtered.length} restaurants`)
-        return response
-      }
-    })
-
-    // Register checkout as imperative tool
-    registerWebMCPTool({
-      name: 'checkout',
-      description: 'Complete order with delivery information',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: 'Full name' },
-          address: { type: 'string', description: 'Delivery address' },
-          phone: { type: 'string', description: 'Phone number' }
-        },
-        required: ['name', 'address', 'phone']
-      },
-      execute: async ({ name, address, phone }) => {
-        console.log('🤖 checkout called with:', { name, address, phone })
-
-        const currentCart = cartRef.current
-
-        if (!name || !address || !phone) {
-          return {
-            success: false,
-            error: 'All fields required: name, address, and phone number'
-          }
-        }
-
-        if (currentCart.length === 0) {
-          return {
-            success: false,
-            error: 'Cart is empty. Use addToCart tool to add items first.'
-          }
-        }
-
-        const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
-        const orderId = `ORD-${Date.now()}`
-
-        const response = {
-          success: true,
-          orderId,
-          customerName: name,
-          deliveryAddress: address,
-          phone,
-          total: `$${total.toFixed(2)}`,
-          itemCount: currentCart.length,
-          items: currentCart.map(item => ({
-            name: item.menuItem.name,
-            quantity: item.quantity,
-            price: item.menuItem.price
-          })),
-          estimatedDelivery: '30-40 minutes',
-          message: `Order ${orderId} confirmed! Delivering to ${address}`
-        }
-
-        console.log('📤 Returning:', response)
-        setCart([])
-        showNotification(`Order ${orderId} confirmed!`)
-        return response
-      }
-    })
-
     registerWebMCPTool({
       name: 'addToCart',
       description: 'Add product to shopping cart',
@@ -173,7 +149,7 @@ export default function Home() {
         required: ['restaurantId', 'menuItemId', 'quantity']
       },
       execute: async ({ restaurantId, menuItemId, quantity }) => {
-        console.log('🤖 addToCart called with:', { restaurantId, menuItemId, quantity })
+        console.log('🛒 addToCart called:', { restaurantId, menuItemId, quantity })
 
         const restaurant = restaurants.find(r => r.id === restaurantId)
         if (!restaurant) {
@@ -192,16 +168,27 @@ export default function Home() {
           return { success: false, error: `${menuItem.name} is out of stock` }
         }
 
-        setCart(prev => {
-          const newCart = [...prev, { menuItem, restaurant, quantity, customizations: {} }]
-          console.log('✅ Cart updated. New cart length:', newCart.length)
-          return newCart
-        })
+        // Update cart and wait for UI to reflect the change
+        return new Promise((resolve) => {
+          setCart(prev => {
+            const newCart = [...prev, { menuItem, restaurant, quantity, customizations: {} }]
+            console.log('✅ Cart updated to', newCart.length, 'items')
 
-        const response = { success: true, message: `${quantity}x ${menuItem.name} added to cart`, cartCount: cart.length + 1 }
-        console.log('📤 Returning:', response)
-        showNotification(`✅ Added ${quantity}x ${menuItem.name}`)
-        return response
+            // Wait for next tick to ensure UI updates
+            setTimeout(() => {
+              const response = {
+                success: true,
+                message: `Added ${quantity}x ${menuItem.name} to cart`,
+                cartCount: newCart.length
+              }
+              showNotification(`✅ ${quantity}x ${menuItem.name} added!`)
+              console.log('✅ addToCart complete:', response)
+              resolve(response)
+            }, 100)
+
+            return newCart
+          })
+        })
       }
     })
 
@@ -345,10 +332,16 @@ export default function Home() {
                   <Search className="w-5 h-5" />
                   Search Restaurants
                 </CardTitle>
-                <CardDescription>Imperative API (JS) - UI for manual search</CardDescription>
+                <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4">
+                <form
+                  onSubmit={handleSearchSubmit}
+                  toolname="searchRestaurants"
+                  tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering."
+                  toolautosubmit="true"
+                  className="space-y-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
                     <select
@@ -388,10 +381,16 @@ export default function Home() {
                   <ShoppingCart className="w-5 h-5" />
                   Checkout
                 </CardTitle>
-                <CardDescription>Imperative API (JS) - UI for manual checkout</CardDescription>
+                <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4">
+                <form
+                  onSubmit={handleCheckoutSubmit}
+                  toolname="checkout"
+                  tooldescription="Complete order with delivery information. Requires name, address, and phone number."
+                  toolautosubmit="true"
+                  className="space-y-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" name="name" placeholder="John Doe" required />
@@ -534,11 +533,11 @@ export default function Home() {
               <CardContent className="space-y-2 text-sm">
                 <div className="space-y-1">
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
                     <span className="font-medium">searchRestaurants</span>
                   </p>
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
+                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
                     <span className="font-medium">checkout</span>
                   </p>
                   <p className="flex items-center gap-2">
