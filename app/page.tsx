@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { restaurants, type Restaurant, type CartItem } from '@/lib/mock-data'
 import { registerWebMCPTool, isWebMCPAvailable } from '@/lib/webmcp'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +17,9 @@ export default function Home() {
   const [notification, setNotification] = useState<string | null>(null)
   const [webmcpStatus, setWebmcpStatus] = useState<'checking' | 'available' | 'unavailable'>('checking')
 
+  const searchFormRef = useRef<HTMLFormElement>(null)
+  const checkoutFormRef = useRef<HTMLFormElement>(null)
+
   useEffect(() => {
     const available = isWebMCPAvailable()
     setWebmcpStatus(available ? 'available' : 'unavailable')
@@ -32,6 +35,28 @@ export default function Home() {
     return () => {
       window.removeEventListener('toolactivated', handleToolActivated)
       window.removeEventListener('toolcancel', handleToolCancel)
+    }
+  }, [cart])
+
+  // Attach native submit event listeners for WebMCP declarative forms
+  useEffect(() => {
+    const searchForm = searchFormRef.current
+    const checkoutForm = checkoutFormRef.current
+
+    if (searchForm) {
+      searchForm.addEventListener('submit', handleSearchSubmitNative)
+    }
+    if (checkoutForm) {
+      checkoutForm.addEventListener('submit', handleCheckoutSubmitNative)
+    }
+
+    return () => {
+      if (searchForm) {
+        searchForm.removeEventListener('submit', handleSearchSubmitNative)
+      }
+      if (checkoutForm) {
+        checkoutForm.removeEventListener('submit', handleCheckoutSubmitNative)
+      }
     }
   }, [cart])
 
@@ -132,9 +157,9 @@ export default function Home() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const nativeEvent = e.nativeEvent as any
-    const formElement = e.currentTarget
+  const handleSearchSubmitNative = (e: Event) => {
+    const nativeEvent = e as any
+    const formElement = e.target as HTMLFormElement
 
     // Extract form data
     const formData = new FormData(formElement)
@@ -180,19 +205,19 @@ export default function Home() {
       // Must call respondWith BEFORE preventDefault
       // @ts-ignore - respondWith requires a Promise
       nativeEvent.respondWith(Promise.resolve(response))
-      e.preventDefault()
-      e.stopPropagation()
+      nativeEvent.preventDefault()
+      nativeEvent.stopPropagation()
       return
     }
 
     // Normal form submission
-    e.preventDefault()
+    nativeEvent.preventDefault()
     showNotification(`Found ${filtered.length} restaurants`)
   }
 
-  const handleCheckoutSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const nativeEvent = e.nativeEvent as any
-    const formElement = e.currentTarget
+  const handleCheckoutSubmitNative = (e: Event) => {
+    const nativeEvent = e as any
+    const formElement = e.target as HTMLFormElement
 
     // Extract form data
     const formData = new FormData(formElement)
@@ -210,13 +235,13 @@ export default function Home() {
       if (nativeEvent.agentInvoked) {
         console.log('🤖 checkout invoked by agent - validation failed')
         console.log('📤 Sending error:', errorResponse)
-        e.preventDefault()
+        nativeEvent.preventDefault()
         // @ts-ignore - respondWith requires a Promise
         nativeEvent.respondWith(Promise.resolve(errorResponse))
         return
       }
 
-      e.preventDefault()
+      nativeEvent.preventDefault()
       showNotification('Please fill all fields')
       return
     }
@@ -230,13 +255,13 @@ export default function Home() {
       if (nativeEvent.agentInvoked) {
         console.log('🤖 checkout invoked by agent - cart empty')
         console.log('📤 Sending error:', errorResponse)
-        e.preventDefault()
+        nativeEvent.preventDefault()
         // @ts-ignore - respondWith requires a Promise
         nativeEvent.respondWith(Promise.resolve(errorResponse))
         return
       }
 
-      e.preventDefault()
+      nativeEvent.preventDefault()
       showNotification('Cart is empty')
       return
     }
@@ -270,18 +295,18 @@ export default function Home() {
       // Must call respondWith BEFORE preventDefault
       // @ts-ignore - respondWith requires a Promise
       nativeEvent.respondWith(Promise.resolve(response))
-      e.preventDefault()
-      e.stopPropagation()
+      nativeEvent.preventDefault()
+      nativeEvent.stopPropagation()
       setCart([])
       formElement.reset()
       return
     }
 
     // Normal submission
-    e.preventDefault()
+    nativeEvent.preventDefault()
     showNotification(`Order ${orderId} confirmed!`)
     setCart([])
-    e.currentTarget.reset()
+    formElement.reset()
   }
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
@@ -322,7 +347,7 @@ export default function Home() {
                 <CardDescription>Declarative API (HTML)</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSearchSubmit} toolname="searchRestaurants" tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering." className="space-y-4">
+                <form ref={searchFormRef} toolname="searchRestaurants" tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering." className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
                     <select
@@ -365,7 +390,7 @@ export default function Home() {
                 <CardDescription>Declarative API + Validation</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleCheckoutSubmit} toolname="checkout" tooldescription="Complete order" className="space-y-4">
+                <form ref={checkoutFormRef} toolname="checkout" tooldescription="Complete order" className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" name="name" placeholder="John Doe" required />
