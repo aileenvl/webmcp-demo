@@ -149,7 +149,7 @@ export default function Home() {
       filtered = filtered.filter(r => r.priceRange === priceRange)
     }
 
-    // Prepare response
+    // Prepare response with menu information
     const response = {
       success: true,
       count: filtered.length,
@@ -159,9 +159,16 @@ export default function Home() {
         cuisine: r.cuisine,
         priceRange: r.priceRange,
         rating: r.rating,
-        deliveryTime: r.deliveryTime
+        deliveryTime: r.deliveryTime,
+        menu: r.menu.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          inStock: item.inStock
+        }))
       })),
-      message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants`
+      message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
     }
 
     // Handle agent invocation
@@ -307,7 +314,7 @@ export default function Home() {
                 <CardDescription>Declarative API (HTML)</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSearchSubmit} toolname="searchRestaurants" tooldescription="Search restaurants by cuisine type and price range" className="space-y-4">
+                <form onSubmit={handleSearchSubmit} toolname="searchRestaurants" tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering." className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
                     <select
