@@ -41,7 +41,7 @@ export default function Home() {
       window.removeEventListener('toolcancel', handleToolCancel)
       const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
       if (searchForm) {
-        searchForm.removeEventListener('submit', handleSearchSubmit)
+        searchForm.removeEventListener('submit', handleSearchSubmit, true)
       }
     }
   }, [cart])
@@ -236,20 +236,26 @@ export default function Home() {
     window.addEventListener('toolactivated', handleToolActivated)
     window.addEventListener('toolcancel', handleToolCancel)
 
-    // Handle search form declaratively
-    const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
-    if (searchForm) {
-      searchForm.addEventListener('submit', handleSearchSubmit)
-    }
+    // Wait for DOM to be ready
+    setTimeout(() => {
+      const searchForm = document.querySelector('form[toolname="searchRestaurants"]')
+      console.log('🔍 Setting up declarative form, found:', searchForm)
+      if (searchForm) {
+        searchForm.addEventListener('submit', handleSearchSubmit, true)
+      }
+    }, 100)
   }
 
   const handleSearchSubmit = (e: Event) => {
+    console.log('🤖 searchRestaurants form submit event fired!', e)
     e.preventDefault()
-    console.log('🤖 searchRestaurants form submitted')
+    e.stopPropagation()
 
     const formData = new FormData(e.target as HTMLFormElement)
-    const cuisine = formData.get('cuisine') as string
-    const priceRange = formData.get('priceRange') as string
+    const cuisine = formData.get('cuisine') as string || 'all'
+    const priceRange = formData.get('priceRange') as string || 'all'
+
+    console.log('📥 Form data:', { cuisine, priceRange })
 
     let filtered = restaurants
     if (cuisine && cuisine !== 'all') {
@@ -284,7 +290,10 @@ export default function Home() {
     showNotification(`🔍 Found ${filtered.length} restaurants`)
 
     if ('respondWith' in e) {
+      console.log('✅ Calling respondWith')
       ;(e as any).respondWith(Promise.resolve(response))
+    } else {
+      console.warn('⚠️ No respondWith method on event')
     }
   }
 

@@ -93,7 +93,7 @@ export const restaurants: Restaurant[] = [
     id: 'pizza-pronto',
     name: 'Pizza Pronto',
     cuisine: 'Italiana',
-    priceRange: '$',
+    priceRange: '$$',
     rating: 4.7,
     deliveryTime: '30-40 min',
     image: '🍕',
