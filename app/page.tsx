@@ -17,8 +17,6 @@ export default function Home() {
   const [notification, setNotification] = useState<string | null>(null)
   const [webmcpStatus, setWebmcpStatus] = useState<'checking' | 'available' | 'unavailable'>('checking')
 
-  const searchFormRef = useRef<HTMLFormElement>(null)
-  const checkoutFormRef = useRef<HTMLFormElement>(null)
   const cartRef = useRef<CartItem[]>(cart)
 
   // Keep cartRef in sync with cart state
@@ -44,38 +42,124 @@ export default function Home() {
     }
   }, [cart])
 
-  // Attach native submit event listeners for WebMCP declarative forms
-  useEffect(() => {
-    const searchForm = searchFormRef.current
-    const checkoutForm = checkoutFormRef.current
-
-    console.log('🔧 Attaching form event listeners')
-
-    if (searchForm) {
-      console.log('✅ Search form listener attached')
-      searchForm.addEventListener('submit', handleSearchSubmitNative)
-    } else {
-      console.warn('⚠️ Search form ref not found')
-    }
-
-    if (checkoutForm) {
-      console.log('✅ Checkout form listener attached')
-      checkoutForm.addEventListener('submit', handleCheckoutSubmitNative)
-    } else {
-      console.warn('⚠️ Checkout form ref not found')
-    }
-
-    return () => {
-      if (searchForm) {
-        searchForm.removeEventListener('submit', handleSearchSubmitNative)
-      }
-      if (checkoutForm) {
-        checkoutForm.removeEventListener('submit', handleCheckoutSubmitNative)
-      }
-    }
-  }, [])
 
   const registerImperativeTools = () => {
+    // Register searchRestaurants as imperative tool
+    registerWebMCPTool({
+      name: 'searchRestaurants',
+      description: 'Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          cuisine: {
+            type: 'string',
+            enum: ['all', 'mexicana', 'italiana', 'japonesa'],
+            description: 'Cuisine type'
+          },
+          priceRange: {
+            type: 'string',
+            enum: ['all', '$', '$$', '$$$'],
+            description: 'Price range'
+          }
+        }
+      },
+      execute: async ({ cuisine, priceRange }) => {
+        console.log('🤖 searchRestaurants called with:', { cuisine, priceRange })
+
+        let filtered = restaurants
+        if (cuisine && cuisine !== 'all') {
+          filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
+        }
+        if (priceRange && priceRange !== 'all') {
+          filtered = filtered.filter(r => r.priceRange === priceRange)
+        }
+
+        const response = {
+          success: true,
+          count: filtered.length,
+          restaurants: filtered.map(r => ({
+            id: r.id,
+            name: r.name,
+            cuisine: r.cuisine,
+            priceRange: r.priceRange,
+            rating: r.rating,
+            deliveryTime: r.deliveryTime,
+            menu: r.menu.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              price: item.price,
+              inStock: item.inStock
+            }))
+          })),
+          message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
+        }
+
+        console.log('📤 Returning:', response)
+        showNotification(`Found ${filtered.length} restaurants`)
+        return response
+      }
+    })
+
+    // Register checkout as imperative tool
+    registerWebMCPTool({
+      name: 'checkout',
+      description: 'Complete order with delivery information',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Full name' },
+          address: { type: 'string', description: 'Delivery address' },
+          phone: { type: 'string', description: 'Phone number' }
+        },
+        required: ['name', 'address', 'phone']
+      },
+      execute: async ({ name, address, phone }) => {
+        console.log('🤖 checkout called with:', { name, address, phone })
+
+        const currentCart = cartRef.current
+
+        if (!name || !address || !phone) {
+          return {
+            success: false,
+            error: 'All fields required: name, address, and phone number'
+          }
+        }
+
+        if (currentCart.length === 0) {
+          return {
+            success: false,
+            error: 'Cart is empty. Use addToCart tool to add items first.'
+          }
+        }
+
+        const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
+        const orderId = `ORD-${Date.now()}`
+
+        const response = {
+          success: true,
+          orderId,
+          customerName: name,
+          deliveryAddress: address,
+          phone,
+          total: `$${total.toFixed(2)}`,
+          itemCount: currentCart.length,
+          items: currentCart.map(item => ({
+            name: item.menuItem.name,
+            quantity: item.quantity,
+            price: item.menuItem.price
+          })),
+          estimatedDelivery: '30-40 minutes',
+          message: `Order ${orderId} confirmed! Delivering to ${address}`
+        }
+
+        console.log('📤 Returning:', response)
+        setCart([])
+        showNotification(`Order ${orderId} confirmed!`)
+        return response
+      }
+    })
+
     registerWebMCPTool({
       name: 'addToCart',
       description: 'Add product to shopping cart',
@@ -172,158 +256,6 @@ export default function Home() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  const handleSearchSubmitNative = (e: Event) => {
-    const nativeEvent = e as any
-    const formElement = e.target as HTMLFormElement
-
-    // Extract form data
-    const formData = new FormData(formElement)
-    const cuisine = formData.get('cuisine') as string
-    const priceRange = formData.get('priceRange') as string
-
-    // Filter restaurants
-    let filtered = restaurants
-    if (cuisine && cuisine !== 'all') {
-      filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
-    }
-    if (priceRange && priceRange !== 'all') {
-      filtered = filtered.filter(r => r.priceRange === priceRange)
-    }
-
-    // Prepare response with menu information
-    const response = {
-      success: true,
-      count: filtered.length,
-      restaurants: filtered.map(r => ({
-        id: r.id,
-        name: r.name,
-        cuisine: r.cuisine,
-        priceRange: r.priceRange,
-        rating: r.rating,
-        deliveryTime: r.deliveryTime,
-        menu: r.menu.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          inStock: item.inStock
-        }))
-      })),
-      message: `Found ${filtered.length} ${cuisine && cuisine !== 'all' ? cuisine : ''} restaurants with their complete menus`
-    }
-
-    // Handle agent invocation
-    if (nativeEvent.agentInvoked) {
-      console.log('🤖 searchRestaurants invoked by agent')
-      console.log('📤 Sending response:', JSON.stringify(response, null, 2))
-
-      // Must call respondWith BEFORE preventDefault
-      // @ts-ignore - respondWith requires a Promise
-      nativeEvent.respondWith(Promise.resolve(response))
-      nativeEvent.preventDefault()
-      nativeEvent.stopPropagation()
-      return
-    }
-
-    // Normal form submission
-    nativeEvent.preventDefault()
-    showNotification(`Found ${filtered.length} restaurants`)
-  }
-
-  const handleCheckoutSubmitNative = (e: Event) => {
-    const nativeEvent = e as any
-    const formElement = e.target as HTMLFormElement
-
-    // Extract form data
-    const formData = new FormData(formElement)
-    const name = formData.get('name') as string
-    const address = formData.get('address') as string
-    const phone = formData.get('phone') as string
-
-    // Validation
-    if (!name || !address || !phone) {
-      const errorResponse = {
-        success: false,
-        error: 'All fields required: name, address, and phone number'
-      }
-
-      if (nativeEvent.agentInvoked) {
-        console.log('🤖 checkout invoked by agent - validation failed')
-        console.log('📤 Sending error:', errorResponse)
-        nativeEvent.preventDefault()
-        // @ts-ignore - respondWith requires a Promise
-        nativeEvent.respondWith(Promise.resolve(errorResponse))
-        return
-      }
-
-      nativeEvent.preventDefault()
-      showNotification('Please fill all fields')
-      return
-    }
-
-    if (cartRef.current.length === 0) {
-      const errorResponse = {
-        success: false,
-        error: 'Cart is empty. Use addToCart tool to add items first.'
-      }
-
-      if (nativeEvent.agentInvoked) {
-        console.log('🤖 checkout invoked by agent - cart empty')
-        console.log('📤 Sending error:', errorResponse)
-        nativeEvent.preventDefault()
-        // @ts-ignore - respondWith requires a Promise
-        nativeEvent.respondWith(Promise.resolve(errorResponse))
-        return
-      }
-
-      nativeEvent.preventDefault()
-      showNotification('Cart is empty')
-      return
-    }
-
-    // Process order
-    const currentCart = cartRef.current
-    const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
-    const orderId = `ORD-${Date.now()}`
-
-    const response = {
-      success: true,
-      orderId,
-      customerName: name,
-      deliveryAddress: address,
-      phone,
-      total: `$${total.toFixed(2)}`,
-      itemCount: currentCart.length,
-      items: currentCart.map(item => ({
-        name: item.menuItem.name,
-        quantity: item.quantity,
-        price: item.menuItem.price
-      })),
-      estimatedDelivery: '30-40 minutes',
-      message: `Order ${orderId} confirmed! Delivering to ${address}`
-    }
-
-    // Handle agent invocation
-    if (nativeEvent.agentInvoked) {
-      console.log('🤖 checkout invoked by agent')
-      console.log('📤 Sending response:', JSON.stringify(response, null, 2))
-
-      // Must call respondWith BEFORE preventDefault
-      // @ts-ignore - respondWith requires a Promise
-      nativeEvent.respondWith(Promise.resolve(response))
-      nativeEvent.preventDefault()
-      nativeEvent.stopPropagation()
-      setCart([])
-      formElement.reset()
-      return
-    }
-
-    // Normal submission
-    nativeEvent.preventDefault()
-    showNotification(`Order ${orderId} confirmed!`)
-    setCart([])
-    formElement.reset()
-  }
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
 
@@ -360,10 +292,10 @@ export default function Home() {
                   <Search className="w-5 h-5" />
                   Search Restaurants
                 </CardTitle>
-                <CardDescription>Declarative API (HTML)</CardDescription>
+                <CardDescription>Imperative API (JS) - UI for manual search</CardDescription>
               </CardHeader>
               <CardContent>
-                <form ref={searchFormRef} toolname="searchRestaurants" tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering." className="space-y-4">
+                <form className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="cuisine">Cuisine Type</Label>
                     <select
@@ -403,10 +335,10 @@ export default function Home() {
                   <ShoppingCart className="w-5 h-5" />
                   Checkout
                 </CardTitle>
-                <CardDescription>Declarative API + Validation</CardDescription>
+                <CardDescription>Imperative API (JS) - UI for manual checkout</CardDescription>
               </CardHeader>
               <CardContent>
-                <form ref={checkoutFormRef} toolname="checkout" tooldescription="Complete order" className="space-y-4">
+                <form className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" name="name" placeholder="John Doe" required />
@@ -549,11 +481,11 @@ export default function Home() {
               <CardContent className="space-y-2 text-sm">
                 <div className="space-y-1">
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">HTML</Badge>
+                    <Badge variant="outline" className="text-xs">JS</Badge>
                     <span className="font-medium">searchRestaurants</span>
                   </p>
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">HTML</Badge>
+                    <Badge variant="outline" className="text-xs">JS</Badge>
                     <span className="font-medium">checkout</span>
                   </p>
                   <p className="flex items-center gap-2">
