@@ -157,62 +157,72 @@ export default function Home() {
     return response
   }
 
-  const registerImperativeTools = () => {
-    registerWebMCPTool({
-      name: 'addToCart',
-      description: 'Add product to shopping cart',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          restaurantId: { type: 'string', description: 'Restaurant ID' },
-          menuItemId: { type: 'string', description: 'Menu item ID' },
-          quantity: { type: 'number', minimum: 1, maximum: 10 }
-        },
-        required: ['restaurantId', 'menuItemId', 'quantity']
-      },
-      execute: async ({ restaurantId, menuItemId, quantity }) => {
-        console.log('🛒 addToCart called:', { restaurantId, menuItemId, quantity })
+  const handleAddToCartSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const restaurantId = formData.get('restaurantId') as string
+    const menuItemId = formData.get('menuItemId') as string
+    const quantity = parseInt(formData.get('quantity') as string)
 
-        const restaurant = restaurants.find(r => r.id === restaurantId)
-        if (!restaurant) {
-          console.log('❌ Restaurant not found:', restaurantId)
-          return { success: false, error: `Restaurant not found: ${restaurantId}. Available IDs: ${restaurants.map(r => r.id).join(', ')}` }
-        }
+    console.log('🛒 addToCart submitted:', { restaurantId, menuItemId, quantity })
 
-        const menuItem = restaurant.menu.find(m => m.id === menuItemId)
-        if (!menuItem) {
-          console.log('❌ Menu item not found:', menuItemId)
-          return { success: false, error: `Item not found: ${menuItemId}. Available IDs in ${restaurant.name}: ${restaurant.menu.map(m => m.id).join(', ')}` }
-        }
-
-        if (!menuItem.inStock) {
-          console.log('❌ Item out of stock:', menuItem.name)
-          return { success: false, error: `${menuItem.name} is out of stock` }
-        }
-
-        // Update cart and wait for UI to reflect the change
-        return new Promise((resolve) => {
-          setCart(prev => {
-            const newCart = [...prev, { menuItem, restaurant, quantity, customizations: {} }]
-            console.log('✅ Cart updated to', newCart.length, 'items')
-
-            // Wait for next tick to ensure UI updates
-            setTimeout(() => {
-              const response = {
-                success: true,
-                message: `Added ${quantity}x ${menuItem.name} to cart`,
-                cartCount: newCart.length
-              }
-              showNotification(`✅ ${quantity}x ${menuItem.name} added!`)
-              console.log('✅ addToCart complete:', response)
-              resolve(response)
-            }, 100)
-
-            return newCart
-          })
-        })
+    const restaurant = restaurants.find(r => r.id === restaurantId)
+    if (!restaurant) {
+      console.log('❌ Restaurant not found:', restaurantId)
+      const error = { success: false, error: `Restaurant not found: ${restaurantId}. Available IDs: ${restaurants.map(r => r.id).join(', ')}` }
+      showNotification('❌ Restaurant not found')
+      const nativeEvent = event.nativeEvent as any
+      if (nativeEvent.respondWith) {
+        nativeEvent.respondWith(Promise.resolve(error))
       }
-    })
+      return error
+    }
+
+    const menuItem = restaurant.menu.find(m => m.id === menuItemId)
+    if (!menuItem) {
+      console.log('❌ Menu item not found:', menuItemId)
+      const error = { success: false, error: `Item not found: ${menuItemId}. Available IDs in ${restaurant.name}: ${restaurant.menu.map(m => m.id).join(', ')}` }
+      showNotification('❌ Menu item not found')
+      const nativeEvent = event.nativeEvent as any
+      if (nativeEvent.respondWith) {
+        nativeEvent.respondWith(Promise.resolve(error))
+      }
+      return error
+    }
+
+    if (!menuItem.inStock) {
+      console.log('❌ Item out of stock:', menuItem.name)
+      const error = { success: false, error: `${menuItem.name} is out of stock` }
+      showNotification(`❌ ${menuItem.name} is out of stock`)
+      const nativeEvent = event.nativeEvent as any
+      if (nativeEvent.respondWith) {
+        nativeEvent.respondWith(Promise.resolve(error))
+      }
+      return error
+    }
+
+    // Add to cart
+    setCart(prev => [...prev, { menuItem, restaurant, quantity, customizations: {} }])
+
+    const response = {
+      success: true,
+      message: `Added ${quantity}x ${menuItem.name} to cart`,
+      cartCount: cart.length + 1
+    }
+
+    showNotification(`✅ ${quantity}x ${menuItem.name} added!`)
+    console.log('✅ addToCart complete:', response)
+
+    // WebMCP requires respondWith() when preventDefault() is called
+    const nativeEvent = event.nativeEvent as any
+    if (nativeEvent.respondWith) {
+      nativeEvent.respondWith(Promise.resolve(response))
+    }
+
+    return response
+  }
+
+  const registerImperativeTools = () => {
 
     registerWebMCPTool({
       name: 'viewCart',
@@ -401,6 +411,57 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShoppingCart className="w-5 h-5" />
+                  Add to Cart
+                </CardTitle>
+                <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handleAddToCartSubmit}
+                  toolname="addToCart"
+                  tooldescription="Add product to shopping cart. Requires restaurant ID, menu item ID, and quantity."
+                  toolautosubmit="true"
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="restaurantId">Restaurant ID</Label>
+                    <Input
+                      id="restaurantId"
+                      name="restaurantId"
+                      placeholder="e.g., taco-loco, pizza-pronto, sushi-zen"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="menuItemId">Menu Item ID</Label>
+                    <Input
+                      id="menuItemId"
+                      name="menuItemId"
+                      placeholder="e.g., lasagna, taco-carnitas"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      name="quantity"
+                      type="number"
+                      min="1"
+                      max="10"
+                      defaultValue="1"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Add to Cart</Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
                   Checkout
                 </CardTitle>
                 <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
@@ -560,11 +621,11 @@ export default function Home() {
                   </p>
                   <p className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
-                    <span className="font-medium">checkout</span>
+                    <span className="font-medium">addToCart</span>
                   </p>
                   <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
-                    <span className="font-medium">addToCart</span>
+                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
+                    <span className="font-medium">checkout</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">JS</Badge>
