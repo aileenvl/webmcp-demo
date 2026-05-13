@@ -19,6 +19,12 @@ export default function Home() {
 
   const searchFormRef = useRef<HTMLFormElement>(null)
   const checkoutFormRef = useRef<HTMLFormElement>(null)
+  const cartRef = useRef<CartItem[]>(cart)
+
+  // Keep cartRef in sync with cart state
+  useEffect(() => {
+    cartRef.current = cart
+  }, [cart])
 
   useEffect(() => {
     const available = isWebMCPAvailable()
@@ -43,11 +49,20 @@ export default function Home() {
     const searchForm = searchFormRef.current
     const checkoutForm = checkoutFormRef.current
 
+    console.log('🔧 Attaching form event listeners')
+
     if (searchForm) {
+      console.log('✅ Search form listener attached')
       searchForm.addEventListener('submit', handleSearchSubmitNative)
+    } else {
+      console.warn('⚠️ Search form ref not found')
     }
+
     if (checkoutForm) {
+      console.log('✅ Checkout form listener attached')
       checkoutForm.addEventListener('submit', handleCheckoutSubmitNative)
+    } else {
+      console.warn('⚠️ Checkout form ref not found')
     }
 
     return () => {
@@ -58,7 +73,7 @@ export default function Home() {
         checkoutForm.removeEventListener('submit', handleCheckoutSubmitNative)
       }
     }
-  }, [cart])
+  }, [])
 
   const registerImperativeTools = () => {
     registerWebMCPTool({
@@ -246,7 +261,7 @@ export default function Home() {
       return
     }
 
-    if (cart.length === 0) {
+    if (cartRef.current.length === 0) {
       const errorResponse = {
         success: false,
         error: 'Cart is empty. Use addToCart tool to add items first.'
@@ -267,7 +282,8 @@ export default function Home() {
     }
 
     // Process order
-    const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
+    const currentCart = cartRef.current
+    const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
     const orderId = `ORD-${Date.now()}`
 
     const response = {
@@ -277,8 +293,8 @@ export default function Home() {
       deliveryAddress: address,
       phone,
       total: `$${total.toFixed(2)}`,
-      itemCount: cart.length,
-      items: cart.map(item => ({
+      itemCount: currentCart.length,
+      items: currentCart.map(item => ({
         name: item.menuItem.name,
         quantity: item.quantity,
         price: item.menuItem.price
