@@ -1,6 +1,6 @@
 # TacoAgent · Demo de 7 minutos
 
-Sesión completa: conceptos y slides 19 min, demo 7 min, preguntas 4 min.
+Sesión completa: conceptos y slides 21 min 30 s, demo 7 min, cierre y preguntas 1 min 30 s.
 
 ## Preparación
 

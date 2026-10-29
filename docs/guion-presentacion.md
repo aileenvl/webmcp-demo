@@ -24,7 +24,7 @@ Presentación adaptada de la charla «Prepara tu webapp para los agentes de nues
 | 21:30–28:30 | Demo en TacoAgent | Seguir el recorrido de abajo. |
 | 28:30–30:00 | 14. Recursos | «Contrato claro, disponibilidad según estado y reglas aplicadas en código. Estas son las tres decisiones para empezar.» |
 
-Las notas completas y las fuentes están en `lib/slides-data.ts` y en las notas del deck exportado.
+Las notas completas y las fuentes están en `public/slides/slides-content.mjs`, en el panel N de la presentación web y en las notas de la presentación editable.
 
 ## Preparación antes de subir al escenario
 
