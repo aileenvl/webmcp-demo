@@ -1,0 +1,6 @@
+- [x] Crear checkpoints 0–5 y ejercicio editable separado.
+- [x] Añadir navegación, código visible y diffs/comandos de recuperación.
+- [x] Typecheck, build de app final+taller y pruebas de invariantes.
+- [x] Verificar etapas y app final en navegador.
+- [x] Guía española con núcleo 10–12 min y ampliación opcional.
+- [x] Guardar ZIP nuevo en Library y reportar límites.

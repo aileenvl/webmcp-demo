@@ -1,0 +1,30 @@
+AGENDA COMPARTIDA · WEBMCP · JSConfMX
+Aileen Villanueva · 29 octubre 2026
+
+Este subproyecto conserva el demo de agenda y su taller de seis checkpoints.
+
+CON LA APP NEXT (desde la raíz de webmcp-demo):
+1. npm ci
+2. npm run dev
+3. Abre http://localhost:3000/agenda/taller/index.html?paso=0
+4. App final: http://localhost:3000/agenda/index.html
+
+PARA EDITAR EN VIVO (desde esta carpeta agenda/, Node 20.19+):
+1. npm ci
+2. npm run dev
+3. Abre http://127.0.0.1:5173/agenda/taller/index.html?paso=0
+4. npm run taller:copiar -- 0
+5. Abre /agenda/taller/index.html?paso=ejercicio y edita taller/pasos/ejercicio.ts.
+6. Comparación: npm run taller:diff -- 2 3
+7. Verificaciones: npm run check
+8. Para actualizar la versión que sirve Next: npm run publicar:next
+
+SIN NODE, CON EL COMPILADO YA INCLUIDO (desde esta carpeta, Python 3):
+python3 -m http.server 5173 --bind 127.0.0.1 --directory ../public
+Abre http://127.0.0.1:5173/agenda/taller/index.html?paso=0
+
+El inspector nativo usa WebMCP real, manualmente y sin LLM integrado.
+Si tu navegador no lo soporta, elige Usar simulador: JS directo, NO WebMCP.
+No se requieren cuentas, claves API ni reservas. Todos los datos son ficticios.
+Lee docs/TALLER.md y ensaya con cronómetro; Reiniciar demo vuelve al inicio.
+Presentación total: 30 min; núcleo del demo estimado: 10–12 min.

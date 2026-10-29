@@ -1,0 +1,23 @@
+--- taller/pasos/00-app.ts	2026-10-28 23:44:42
++++ taller/pasos/01-lectura.ts	2026-10-28 23:44:42
+@@ -1,6 +1,15 @@
+-import type { Agenda, Tool } from '../contrato.js';
+-export const id = 0;
+-// La app humana funciona. No publicamos ninguna herramienta.
+-export function defineTools(_agenda: Agenda): Tool[] {
+-  return [];
++import { type Agenda, type Tool, emptyInput, emptyArguments, cancelled, invalid } from '../contrato.js';
++export const id = 1;
++export function defineTools(agenda: Agenda): Tool[] {
++  return [{
++    name: 'listar_sesiones',
++    description: 'Lee el catálogo ficticio y la agenda actual. No modifica datos.',
++    inputSchema: emptyInput,
++    annotations: { readOnlyHint: true, untrustedContentHint: true },
++    execute: (input, { signal }) => {
++      if (signal.aborted) return cancelled();
++      if (!emptyArguments(input)) return invalid();
++      return JSON.stringify({ ok: true, code: 'STATE', ...agenda.snapshot() });
++    },
++  }];
+ }

@@ -1,0 +1,44 @@
+--- taller/pasos/04-contexto.ts	2026-10-28 23:44:43
++++ taller/pasos/05-confirmacion.ts	2026-10-28 23:44:43
+@@ -1,29 +1,15 @@
+-import { type Agenda, type Tool, sessionInput, cancelled } from '../contrato.js';
+-import { defineTools as resultados } from './03-resultados.js';
+-export const id = 4;
++import { type Agenda, type Tool, emptyInput, emptyArguments, cancelled, invalid } from '../contrato.js';
++import { defineTools as contexto } from './04-contexto.js';
++export const id = 5;
+ export function defineTools(agenda: Agenda): Tool[] {
+-  const tools: Tool[] = [...resultados(agenda), {
+-    name: 'seleccionar_sesion',
+-    description: 'Selecciona una sesión añadida; null quita la selección.',
+-    inputSchema: { ...sessionInput, properties: { sessionId: { type: ['string', 'null'], enum: ['webmcp', 'tipos', 'accesibilidad', null] } } },
+-    execute: (input, { signal }) => signal.aborted ? cancelled() : JSON.stringify(agenda.select(input)),
++  return [...contexto(agenda), {
++    name: 'preparar_confirmacion',
++    description: 'Abre una revisión. NO confirma: la persona confirma en la UI.',
++    inputSchema: emptyInput,
++    execute: (input, { signal }) => {
++      if (signal.aborted) return cancelled();
++      if (!emptyArguments(input)) return invalid();
++      return JSON.stringify(agenda.prepareConfirmation());
++    },
+   }];
+-  const { selectedId, finalized } = agenda.snapshot();
+-  if (selectedId && !finalized) {
+-    tools.push({
+-      name: 'editar_sesion_seleccionada',
+-      description: `Cambia el título local de la sesión seleccionada (${selectedId}).`,
+-      inputSchema: { type: 'object', properties: { title: { type: 'string', minLength: 1, maxLength: 80 } }, required: ['title'], additionalProperties: false },
+-      annotations: { untrustedContentHint: true },
+-      execute: (input, { signal }) => {
+-        if (signal.aborted) return cancelled();
+-        // Un callback antiguo tampoco debe editar otra selección.
+-        if (agenda.snapshot().selectedId !== selectedId || agenda.snapshot().finalized) {
+-          return JSON.stringify({ ok: false, code: 'STALE_SELECTION', message: 'Cambió la selección. Descubre las herramientas otra vez.' });
+-        }
+-        return JSON.stringify(agenda.editSelected(input));
+-      },
+-    });
+-  }
+-  return tools;
+ }

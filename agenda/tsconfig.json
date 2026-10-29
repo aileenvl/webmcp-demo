@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "webmcp-types",
+      "node"
+    ],
+    "skipLibCheck": false
+  },
+  "include": [
+    "src",
+    "tests",
+    "taller",
+    "vite.config.ts"
+  ]
+}

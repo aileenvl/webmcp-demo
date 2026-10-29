@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": ".test-build"
+  },
+  "include": [
+    "src/agenda.ts",
+    "src/tools.ts",
+    "tests",
+    "taller/checkpoints.ts"
+  ]
+}

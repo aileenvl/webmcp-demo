@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate Vite project: checked with agenda npm test/typecheck/build.
+    "agenda/**",
+    // Published Vite output; source is reviewed in agenda/.
+    "public/agenda/**",
   ]),
 ]);
 
