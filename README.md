@@ -15,7 +15,7 @@ npm run dev
 
 Abre [localhost:3000](http://localhost:3000).
 
-Las **14 slides con el tema de la presentación original** están en [localhost:3000/slides/index.html](http://localhost:3000/slides/index.html). Usa ←/→ para navegar, **G** para el índice, **N** para notas y fuentes y **F** para pantalla completa. El [guion de 30 minutos](docs/guion-presentacion.md) acompaña la charla.
+Las **14 slides en modo claro, con los acentos de la presentación original** están en [localhost:3000/slides/index.html](http://localhost:3000/slides/index.html). Usa ←/→ para navegar, **G** para el índice, **N** para notas y fuentes y **F** para pantalla completa. El [guion de 30 minutos](docs/guion-presentacion.md) acompaña la charla.
 
 - **WebMCP nativo:** en Chrome, abre `chrome://flags/#enable-webmcp-testing`, selecciona **Enabled**, pulsa **Relaunch** y vuelve al demo. Usa localhost o HTTPS. En la consola, `Boolean(document.modelContext)` debe devolver `true`. El soporte depende de la versión y configuración del navegador.
 - **Inspector:** instala el [WebMCP Model Context Tool Inspector oficial](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd) para descubrir e invocar herramientas. Las llamadas manuales no necesitan un modelo; su modo de lenguaje natural con Gemini requiere una API key propia.
