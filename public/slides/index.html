@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>WebMCP · Aileen Villanueva</title>
+  <style>
+    :root{font-family:Arial,Helvetica,system-ui,sans-serif;color:#f0f0f0;background:#1e1e1e;color-scheme:dark}
+    *{box-sizing:border-box}body{margin:0}button,a{touch-action:manipulation}button{font:inherit;cursor:pointer}
+    button{border:1px solid #555;border-radius:6px;background:#272727;color:#f0f0f0;padding:10px 15px}button:hover{background:#363636}
+    button:disabled{opacity:.3;cursor:default}a{color:#8ab4f8}button:focus-visible,a:focus-visible{outline:3px solid #fbbc04;outline-offset:4px}
+    #progress{position:fixed;inset:0 0 auto;height:4px;background:#3a3a3a;z-index:3}#progress span{display:block;height:100%;background:#4285f4}
+    .colors{display:flex;gap:9px;position:fixed;left:5vw;top:29px}.colors i{width:11px;height:11px;border-radius:50%;background:#4285f4}
+    .colors i:nth-child(2){background:#ea4335}.colors i:nth-child(3){background:#fbbc04}.colors i:nth-child(4){background:#34a853}
+    #hint{position:fixed;right:4vw;top:23px;color:#b0b0b0;font-size:12px}main{min-height:100dvh;padding:82px 6vw 108px;display:flex;align-items:center}
+    #slide{width:min(1200px,100%);margin:auto}h1{font-size:clamp(32px,4.3vw,64px);line-height:1.13;letter-spacing:-1.5px;margin:0 0 42px;font-weight:600}
+    .title h1{font-size:clamp(72px,12vw,176px);color:#4285f4;margin-bottom:28px;letter-spacing:-5px}.title p{font-size:clamp(24px,3.2vw,43px);line-height:1.45;white-space:pre-line;max-width:1000px}
+    .points{list-style:none;padding:0;margin:0;display:grid;gap:23px}.points li{font-size:clamp(19px,2.35vw,33px);line-height:1.4;border-left:4px solid #4285f4;padding-left:24px}
+    .points li:nth-child(2){border-color:#ea4335}.points li:nth-child(3){border-color:#fbbc04}.points li:nth-child(4){border-color:#34a853}
+    .columns{display:grid;grid-template-columns:1fr 1fr;gap:5vw}.columns section{border-top:4px solid #4285f4;padding-top:22px}.columns section:nth-child(2){border-color:#34a853}
+    .columns h2{font-size:clamp(24px,3vw,40px);margin:0 0 28px}.columns .points li{border:0;padding:0;font-size:clamp(18px,2vw,28px)}
+    pre{background:#252525;border:1px solid #3a3a3a;border-left:4px solid #4285f4;border-radius:6px;padding:26px 30px;overflow:auto;margin:0}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(13px,1.75vw,25px);line-height:1.65;white-space:pre}
+    .caption{font-size:16px;color:#b7b7b7;margin-top:18px;line-height:1.5}.demo-link{display:inline-block;margin-top:30px;font-size:24px;padding:12px 0;text-underline-offset:6px}
+    nav{position:fixed;bottom:22px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:4}#count{min-width:70px;text-align:center;font:15px ui-monospace,monospace}
+    #notes{position:fixed;top:65px;right:24px;bottom:85px;width:min(490px,calc(100% - 48px));overflow:auto;background:#252525;border:1px solid #555;border-radius:8px;padding:24px;z-index:5;box-shadow:0 12px 70px #0008}
+    #notes h2{font-size:22px;margin:0 0 16px}#notes p{font-size:15px;line-height:1.65;white-space:pre-line}#notes ul{padding-left:20px}#notes li{margin:12px 0}#notes a{font-size:13px;overflow-wrap:anywhere}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:15px}.panel-head button{flex-shrink:0}#notes .warning{color:#fbbc04;font-size:13px}
+    dialog{background:#1e1e1e;color:#f0f0f0;border:1px solid #555;border-radius:8px;width:min(1000px,94vw);max-height:88dvh;padding:28px}dialog::backdrop{background:#000b}
+    #index-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:24px}#index-list button{text-align:left;min-height:85px;line-height:1.4}#index-list [aria-current]{border-color:#4285f4;background:#263348}
+    #error{position:fixed;bottom:78px;left:20px;right:20px;text-align:center;color:#fbbc04;font-size:13px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+    @media(max-width:650px){#hint{display:none}main{padding:76px 6vw 105px}h1{margin-bottom:28px}.columns{grid-template-columns:1fr;gap:28px}.columns h2{margin-bottom:14px}.points{gap:18px}.points li{padding-left:16px}pre{padding:18px 12px}nav{gap:6px}nav button{padding:10px}#index-list{grid-template-columns:1fr 1fr}.title h1{letter-spacing:-3px}}
+    @media print{main{padding:30px;min-height:auto}nav,#hint,#notes,dialog,.colors,#progress{display:none!important}}
+  </style>
+</head>
+<body>
+  <div id="progress" aria-hidden="true"><span></span></div>
+  <div class="colors" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div id="hint">← → navegar · G índice · N notas · F pantalla completa</div>
+  <main><article id="slide"></article></main>
+  <nav aria-label="Controles de presentación">
+    <button id="prev" aria-label="Diapositiva anterior">←</button>
+    <button id="grid" aria-label="Abrir índice de diapositivas">Índice</button>
+    <span id="count"></span>
+    <button id="toggle-notes" aria-controls="notes" aria-expanded="false">Notas</button>
+    <button id="fullscreen" aria-label="Entrar a pantalla completa">⛶</button>
+    <button id="next" aria-label="Diapositiva siguiente">→</button>
+  </nav>
+  <aside id="notes" hidden aria-label="Notas para presentar">
+    <div class="panel-head"><h2>Notas para presentar</h2><button id="close-notes" aria-label="Cerrar notas">×</button></div>
+    <p class="warning">Estas notas se muestran en esta pantalla. N o Esc para cerrar.</p>
+    <p id="notes-body"></p><h3>Fuentes</h3><ul id="sources"></ul>
+  </aside>
+  <dialog id="index" aria-labelledby="index-title"><div class="panel-head"><h2 id="index-title">Todas las diapositivas</h2><button id="close-index" aria-label="Cerrar índice">×</button></div><div id="index-list"></div></dialog>
+  <p id="error" role="status"></p><p id="announcement" class="sr-only" aria-live="polite"></p>
+  <noscript>Activa JavaScript para ver las 14 diapositivas de WebMCP.</noscript>
+  <script type="module">
+    import { slides } from './slides-content.mjs';
+    const $ = id => document.getElementById(id);
+    const hashSlide = () => Math.max(0, Math.min(slides.length - 1, (Number.parseInt(location.hash.slice(1), 10) || 1) - 1));
+    let current = hashSlide();
+    function node(tag, text, className) { const el = document.createElement(tag); if (text != null) el.textContent = text; if (className) el.className = className; return el; }
+    function list(lines) { const ul = node('ul', null, 'points'); lines.forEach(line => ul.append(node('li', line.replace(/^•\s*/, '')))); return ul; }
+    function render() {
+      const data = slides[current], slide = $('slide');
+      slide.replaceChildren(node('h1', data.title)); slide.className = data.type; slide.setAttribute('aria-label', `Diapositiva ${current + 1}: ${data.title}`);
+      if (data.type === 'title') slide.append(node('p', data.subtitle));
+      else if (data.type === 'code') { const pre = node('pre'); pre.append(node('code', data.code)); slide.append(pre, node('p', data.codeLanguage, 'caption')); }
+      else if (data.type === 'comparison') {
+        const columns = node('div', null, 'columns');
+        [data.leftContent, data.rightContent].forEach(lines => { const section = node('section'); section.append(node('h2', lines[0]), list(lines.slice(1))); columns.append(section); }); slide.append(columns);
+      } else { slide.append(list(data.content || [])); }
+      if (data.type === 'demo') { const link = node('a', 'Abrir demo de TacoAgent →', 'demo-link'); link.href = '/'; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); }
+      $('count').textContent = `${current + 1} / ${slides.length}`; $('prev').disabled = current === 0; $('next').disabled = current === slides.length - 1;
+      $('progress').firstElementChild.style.width = `${(current + 1) / slides.length * 100}%`;
+      $('notes-body').textContent = data.notes || ''; $('sources').replaceChildren();
+      (data.sources || []).forEach(source => { const url = new URL(source); if (!['https:', 'http:'].includes(url.protocol)) return; const li = node('li'), a = node('a', source); a.href = url.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; li.append(a); $('sources').append(li); });
+      $('announcement').textContent = `Diapositiva ${current + 1} de ${slides.length}: ${data.title}`;
+      document.title = `${current + 1} · ${data.title} · WebMCP`; window.scrollTo(0, 0);
+    }
+    function go(index) { current = Math.max(0, Math.min(slides.length - 1, index)); history.replaceState(null, '', `#${current + 1}`); render(); }
+    function notes(open = $('notes').hidden) { $('notes').hidden = !open; $('toggle-notes').setAttribute('aria-expanded', String(open)); }
+    function grid() {
+      $('index-list').replaceChildren(); notes(false);
+      slides.forEach((slide, index) => { const button = node('button', `${index + 1}. ${slide.title}`); if (index === current) button.setAttribute('aria-current', 'step'); button.onclick = () => { $('index').close(); go(index); }; $('index-list').append(button); });
+      $('index').showModal(); $('index-list').querySelector('[aria-current]').focus();
+    }
+    async function fullscreen() { try { $('error').textContent = ''; if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch { $('error').textContent = 'El navegador no permitió pantalla completa. Usa su menú de visualización.'; } }
+    $('prev').onclick = () => go(current - 1); $('next').onclick = () => go(current + 1); $('grid').onclick = grid;
+    $('toggle-notes').onclick = () => notes(); $('close-notes').onclick = () => { notes(false); $('toggle-notes').focus(); }; $('close-index').onclick = () => $('index').close(); $('fullscreen').onclick = fullscreen;
+    document.addEventListener('fullscreenchange', () => $('fullscreen').setAttribute('aria-label', document.fullscreenElement ? 'Salir de pantalla completa' : 'Entrar a pantalla completa'));
+    window.addEventListener('hashchange', () => { current = hashSlide(); render(); });
+    window.addEventListener('keydown', event => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
+      if (event.key === 'Escape' && !$('notes').hidden) { event.preventDefault(); notes(false); return; }
+      if ($('index').open || (event.target instanceof Element && event.target.closest('a,button,input,select,textarea,[contenteditable]'))) return;
+      const actions = { ArrowRight: () => go(current + 1), ArrowLeft: () => go(current - 1), Home: () => go(0), End: () => go(slides.length - 1), g: grid, n: () => notes(), f: fullscreen };
+      const action = actions[event.key] || actions[event.key.toLowerCase()]; if (action) { event.preventDefault(); action(); }
+    });
+    render();
+  </script>
+</body>
+</html>

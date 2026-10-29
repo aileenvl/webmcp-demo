@@ -1,33 +1,18 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next'
+import './globals.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// These experimental selectors are newer than the CSS bundler's parser.
+const webmcpFocusStyles = `
+@supports selector(form:tool-form-active) {
+  form:tool-form-active { outline: 3px solid #146b78; outline-offset: 8px; background: #e9f2ee; }
+  button:tool-submit-active { outline: 3px solid #146b78; outline-offset: 4px; }
+}`
 
 export const metadata: Metadata = {
-  title: "FoodHub - WebMCP Demo",
-  description: "AI-Ready Restaurant Platform - WebMCP Demo for agents",
-};
+  title: 'TacoAgent · Demo de WebMCP',
+  description: 'Demo en español de herramientas WebMCP, registro dinámico y revisión humana de pedidos ficticios.',
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="es"><head><style>{webmcpFocusStyles}</style></head><body>{children}</body></html>
 }

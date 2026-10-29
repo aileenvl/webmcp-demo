@@ -1,52 +1,12 @@
-// WebMCP Type Declarations
-// Extends HTML attributes to support WebMCP custom attributes
+import 'react'
+import type { HTMLAttributes } from 'react'
 
-declare namespace React {
+declare module 'react' {
   interface FormHTMLAttributes<T> {
-    toolname?: string
-    tooldescription?: string
-    toolautosubmit?: string | boolean
+    toolname?: HTMLAttributes<T>['title']
+    tooldescription?: HTMLAttributes<T>['title']
+    toolautosubmit?: HTMLAttributes<T>['title']
   }
-
-  interface InputHTMLAttributes<T> {
-    toolparamdescription?: string
-  }
-
-  interface SelectHTMLAttributes<T> {
-    toolparamdescription?: string
-  }
-
-  interface TextareaHTMLAttributes<T> {
-    toolparamdescription?: string
-  }
-}
-
-// WebMCP Navigator API
-interface Navigator {
-  modelContext?: {
-    registerTool: (tool: {
-      name: string
-      description: string
-      inputSchema: {
-        type: 'object'
-        properties: Record<string, any>
-        required?: string[]
-      }
-      execute: (params: any) => Promise<string | object>
-    }) => void
-    unregisterTool: (toolName: string) => void
-    provideContext: (context: { tools: any[] }) => void
-  }
-}
-
-// WebMCP Events
-interface WindowEventMap {
-  toolactivated: CustomEvent<{ toolName: string }>
-  toolcancel: CustomEvent<{ toolName: string }>
-}
-
-// Form submit event extension
-interface SubmitEvent extends Event {
-  agentInvoked?: boolean
-  respondWith?: (response: any) => void
+  interface InputHTMLAttributes<T> { toolparamdescription?: HTMLAttributes<T>['title'] }
+  interface SelectHTMLAttributes<T> { toolparamdescription?: HTMLAttributes<T>['title'] }
 }

@@ -1,68 +1,59 @@
-// WebMCP Type Definitions
+import type { ToolInput, ToolResult } from './demo-state'
+
 export interface ToolDefinition {
   name: string
   description: string
-  inputSchema: {
-    type: 'object'
-    properties: Record<string, any>
-    required?: string[]
-  }
-  execute: (params: any) => Promise<string | object>
+  inputSchema: { type: 'object'; properties: Record<string, unknown>; required?: string[]; additionalProperties?: boolean }
+  annotations?: { readOnlyHint?: boolean; consequentialHint?: boolean }
+  execute: (params: ToolInput) => Promise<ToolResult>
 }
 
-// Check if WebMCP is available
-export function isWebMCPAvailable(): boolean {
-  if (typeof window === 'undefined') return false
-  return 'modelContext' in navigator
+export interface ModelContext {
+  registerTool(tool: ToolDefinition, options: { signal: AbortSignal }): Promise<void> | void
 }
 
-// Register a tool with WebMCP
-export function registerWebMCPTool(tool: ToolDefinition): boolean {
-  if (!isWebMCPAvailable()) {
-    console.warn('WebMCP not available. Tool registration skipped:', tool.name)
-    return false
-  }
-
-  try {
-    // @ts-ignore - WebMCP API not in TypeScript types yet
-    navigator.modelContext.registerTool(tool)
-    console.log(`✅ WebMCP tool registered: ${tool.name}`)
-    return true
-  } catch (error) {
-    console.error('Failed to register WebMCP tool:', error)
-    return false
-  }
+export function getModelContext(): ModelContext | undefined {
+  if (typeof document === 'undefined') return undefined
+  const context = (document as Document & { modelContext?: ModelContext }).modelContext
+  return typeof context?.registerTool === 'function' ? context : undefined
 }
 
-// Unregister a tool
-export function unregisterWebMCPTool(toolName: string): boolean {
-  if (!isWebMCPAvailable()) return false
+/** Retains unchanged registrations; aborts tools when their preconditions stop holding. */
+export class ToolRegistry {
+  private active = new Map<string, AbortController>()
+  private queue = Promise.resolve()
+  private disposed = false
 
-  try {
-    // @ts-ignore
-    navigator.modelContext.unregisterTool(toolName)
-    console.log(`🗑️ WebMCP tool unregistered: ${toolName}`)
-    return true
-  } catch (error) {
-    console.error('Failed to unregister WebMCP tool:', error)
-    return false
+  constructor(private readonly context: ModelContext) {}
+
+  setTools(tools: ToolDefinition[]): Promise<void> {
+    const operation = this.queue.then(async () => {
+      if (this.disposed) return
+      const names = new Set(tools.map(tool => tool.name))
+      for (const [name, controller] of this.active) {
+        if (!names.has(name)) { controller.abort(); this.active.delete(name) }
+      }
+      for (const tool of tools) {
+        if (this.disposed || this.active.has(tool.name)) continue
+        const controller = new AbortController()
+        this.active.set(tool.name, controller)
+        try {
+          await this.context.registerTool(tool, { signal: controller.signal })
+        } catch (error) {
+          controller.abort()
+          this.active.delete(tool.name)
+          throw error
+        }
+      }
+    })
+    // Keep later state transitions usable even after a rejected registration.
+    this.queue = operation.catch(() => {})
+    return operation
   }
-}
 
-// Provide context with multiple tools at once
-export function provideWebMCPContext(tools: ToolDefinition[]): boolean {
-  if (!isWebMCPAvailable()) {
-    console.warn('WebMCP not available. Context not provided.')
-    return false
-  }
-
-  try {
-    // @ts-ignore
-    navigator.modelContext.provideContext({ tools })
-    console.log(`✅ WebMCP context provided with ${tools.length} tools`)
-    return true
-  } catch (error) {
-    console.error('Failed to provide WebMCP context:', error)
-    return false
+  dispose() {
+    this.disposed = true
+    for (const controller of this.active.values()) controller.abort()
+    this.active.clear()
   }
 }
