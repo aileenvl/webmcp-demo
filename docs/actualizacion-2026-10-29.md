@@ -1,54 +1,42 @@
-# Adaptación de la charla · 29 de octubre de 2026
+# Actualización de la charla · 29 de octubre de 2026
 
-La sesión actual dura **30 minutos**, contiene **22 slides** y utiliza **TacoAgent, el demo del repositorio**, como ejemplo principal. El plan de ensayo es **18 minutos de explicación, 10 de demo y 2 de cierre**. Los conceptos se conectan con búsqueda, menú, carrito, errores y revisión de un pedido ficticio.
+La sesión tiene **34 slides en español**, tema claro y **30 minutos**: 20 para explicación, 8 para TacoAgent y 2 para cierre o preguntas. La definición aparece inmediatamente después del título.
 
-## Hilo de las 22 slides
-
-| Parte | Slides | Contenido |
+| Orden solicitado | Slides | Contenido visible |
 | --- | --- | --- |
-| Por qué nace WebMCP | 2–4 | Intención humana, acciones de una página y el ejemplo de reserva de Sarah |
-| Qué es | 5–7 | Capacidades del documento, papel del navegador y APIs imperativa y declarativa |
-| Para qué se usa | 8–10 | Casos concretos, herramientas según el contexto y el sandbox de PayPal |
-| Cómo difiere de MCP | 11–12 | Servidores locales o remotos y capacidades de la página abierta; convivencia |
-| Estado de la propuesta y empezar hoy | 13–20 | Soporte, contratos, registro dinámico, Types, Skill, DevTools, seguridad y feedback |
+| Título | 1 | WebMCP y Aileen Villanueva. |
+| Qué es WebMCP | 2–5 | Definición, problema que resuelve con el ejemplo de Sarah, participantes y recorrido de una llamada. |
+| Para qué sirve | 6–12 | Viajes, formularios complejos, comercio, soporte, diagnósticos, herramientas de trabajo, Aisle/Alza/Roque Nights, PayPal y límites. |
+| Cómo usarlo | 13–26 | Adopción gradual, HTML y JavaScript, respuesta del formulario, schema, validación, errores, ciclo de vida, eventos, CSS, Types/Skill, DevTools, seguridad y feedback. |
+| Diferencias con MCP | 27–29 | Alcance, contexto, protocolo, transportes y coexistencia. |
+| Estándares | 30–32 | Estado real del borrador, evolución de la API y comprobación/configuración del navegador. |
+| Demo | 33–34 | TacoAgent: menú, carrito y revisión humana; enlaces al demo y al video local de respaldo. |
 
-La slide 1 abre la charla, la 21 conduce el demo de TacoAgent y la 22 propone un primer paso y abre preguntas. El [guion de la presentación](guion-presentacion.md) desarrolla las cinco partes y el [guion del demo](guion-demo.md) contiene las llamadas exactas. Los tiempos son una estimación para ensayar.
+El [guion](guion-presentacion.md) sigue este mismo orden. El [recorrido de TacoAgent](guion-demo.md) contiene las llamadas y resultados para el demo. Los tiempos son estimaciones de ensayo.
 
-## Qué muestra TacoAgent
+## Recuperación de la charla anterior
 
-La búsqueda se declara con un formulario HTML, `toolname`, `tooldescription` y `toolautosubmit`. Cuando el agente envía el formulario y JavaScript intercepta el envío, `SubmitEvent.respondWith()` devuelve el resultado.
+Se compararon el `SCRIPT.md` y los datos originales de la presentación anterior con el material actual. Se recuperaron los casos de viajes, comercio, formularios médicos o legales como ejemplos de preparación de datos para revisión, soporte y diagnósticos. También volvieron los eventos de formularios, estados CSS, mejora progresiva y diseño de herramientas. Las marcas de Google I/O se identifican como experimentos anunciados, sin afirmar despliegue universal ni atribuirles el flujo hipotético de una slide.
 
-Las demás acciones usan funciones JavaScript compartidas con la interfaz. `getRestaurantInfo` abre un menú; entonces aparece `addToCart`. Con productos en el carrito aparecen `clearCart` y `checkout`. `viewCart` permite leer el estado actual incluso cuando está vacío.
+Se actualizaron afirmaciones antiguas sobre la API, el alcance de MCP, la autenticación, el descubrimiento y el estado del estándar. El [mapa de cobertura](fuentes-y-cobertura.md) distingue lo conservado, reubicado y corregido, e identifica las fuentes compartidas que no pudieron recuperarse directamente.
 
-El recuento total, incluida la herramienta HTML, es **3 → 4 → 6 → 4**: inicio, menú abierto, productos agregados y carrito vacío después de confirmar o vaciar. El menú permanece abierto. «Reiniciar» vuelve a tres herramientas.
+## Código y documentación actual
 
-La función valida restaurante, producto, stock y cantidad entera de 1 a 10. Los errores conservan el carrito y explican cómo corregir la llamada. `checkout` devuelve **`pending-human-review`** y abre una revisión; una persona confirma desde la interfaz. Modificar el carrito invalida la revisión pendiente. No hay pagos, envíos ni datos personales requeridos; el estado vive en memoria.
+La revisión contrasta el demo y los ejemplos con las guías actuales de Chrome, el borrador WebMCP del 27 de octubre de 2026 y MCP **2026-07-28**. Los detalles y límites constan en la [matriz de revisión](revision-api-2026-10-29.md).
 
-El panel «Ensayo guiado», marcado «Local · sin IA», ejecuta las mismas funciones de negocio para practicar. Las llamadas de ese panel son JavaScript directo. La invocación nativa se demuestra desde DevTools o un Inspector compatible, y se distingue de evaluar las decisiones de un LLM.
+El demo usa `document.modelContext`, registro asíncrono con `registerTool(tool, { signal })`, callbacks con una señal de ejecución distinta de la señal del registro y un formulario HTML con `agentInvoked`/`respondWith()`. Las slides de eventos escuchan sobre `document.modelContext`; se conservan las pseudo-clases declarativas vigentes.
 
-## Material reciente incorporado
+La revisión corrigió entradas no válidas y campos adicionales, normalización de cocina, cancelación antes de una mutación, retirada de registros pendientes y publicación de un conteo obsoleto. La lógica se comprueba con pruebas de comportamiento; la integración nativa se revisa aparte en un navegador compatible. La confirmación del pedido ficticio sigue perteneciendo al botón de la persona.
 
-- **Sarah:** la reserva se explica con el mismo widget y objetivo por dos rutas. La comparación es didáctica, no un benchmark universal.
-- **Registro dinámico:** los ejemplos Aisle, Alza y Roque Nights del texto de André aportado por Aileen muestran cuándo una herramienta tiene sentido y cómo coordinar su retirada. TacoAgent concreta ese principio con el menú abierto y el contenido del carrito.
-- **PayPal:** se conserva el alcance de su prueba interna pequeña en sandbox y la revisión del comprador. Las cifras se presentan con sus límites en las slides y sus notas.
-- **Types, Skill y DevTools:** se incluyen recursos actuales para desarrollar e inspeccionar contratos. Los tipos no añaden soporte al navegador; los hints no sustituyen validación o autorización.
-- **Feedback:** las respuestas estructuradas y errores del demo hacen visible qué ocurrió. El reporting fuera de banda del artículo de André se presenta como propuesta; el resultado local del inspector ofrece otra señal de depuración.
+## Respaldo sin conexión
 
-La cobertura y atribución detalladas están en [Fuentes y cobertura](fuentes-y-cobertura.md) y en las notas de cada slide. Los enlaces de X y el enlace corto de LinkedIn no se recuperaron íntegramente: no se atribuye contenido supuesto a esos IDs. Los ejemplos de LinkedIn se apoyan en el texto aportado y en fuentes primarias.
+La última slide enlaza al MP4 local de dos minutos. El archivo incorpora textos en español y no tiene audio para permitir narración en vivo. Usa capturas y resultados de llamadas nativas; no presenta una conversación con un LLM. Reproducir el MP4 descargado no requiere internet ni el servidor. El demo y las slides web sí necesitan su servidor local.
 
-## API y estado de la propuesta
+## Fuentes de referencia
 
-La implementación utiliza **`document.modelContext`**, registro asíncrono con `registerTool(tool, { signal })` y retirada con `AbortController.abort()`. El adaptador conserva los registros que siguen siendo útiles. Cada ejecución vuelve a validar entradas y estado. Retirar un registro no equivale a cancelar automáticamente una ejecución ya activa.
-
-El documento publicado el **27 de octubre de 2026** es un **Draft Community Group Report**: WebMCP es una propuesta abierta en evolución y no un W3C Standard publicado ni un documento de Standards Track. La charla explica cómo probarlo hoy en un navegador compatible con ese estado real.
-
-## Fuentes primarias
-
-- [Especificación WebMCP](https://webmachinelearning.github.io/webmcp/).
-- [Introducción de Chrome](https://developer.chrome.com/docs/ai/webmcp) y [comparación con MCP](https://developer.chrome.com/docs/ai/webmcp/compare-mcp).
+- [Introducción y casos de uso](https://developer.chrome.com/docs/ai/webmcp).
 - [API imperativa](https://developer.chrome.com/docs/ai/webmcp/imperative-api) y [declarativa](https://developer.chrome.com/docs/ai/webmcp/declarative-api).
-- [Demo de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/) y [código original](https://github.com/sdras/webmcp-demo).
-- [Caso PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/).
-- [Seguridad](https://developer.chrome.com/docs/ai/webmcp/secure-tools) y [DevTools WebMCP](https://developer.chrome.com/docs/devtools/application/webmcp).
-- [Tipos upstream](https://github.com/webmachinelearning/webmcp-types) y [Skill de GoogleChromeLabs](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
-- [Closing the WebMCP Feedback Loop, André Cipriani Bandarra](https://bandarra.me/posts/webmcp-feedback-loop).
+- [Especificación WebMCP](https://webmachinelearning.github.io/webmcp/) y [MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28).
+- [Web de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/), [Google I/O](https://developer.chrome.com/blog/chrome-at-io26) y [PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/).
+- [DevTools WebMCP](https://developer.chrome.com/docs/devtools/application/webmcp), [tipos](https://github.com/webmachinelearning/webmcp-types) y [Skill](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
+- [Feedback fuera del flujo del agente, André Bandarra](https://bandarra.me/posts/webmcp-feedback-loop).

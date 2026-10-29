@@ -28,4 +28,4 @@ La auditoría completa sigue incluyendo avisos en el CLI y sus herramientas tran
 
 ## Verificación
 
-Con Next **16.4.3**: 7 pruebas de comportamiento aprobadas, TypeScript y ESLint sin errores, build de producción completado. La integración nativa WebMCP requiere además probar un navegador compatible; estas comprobaciones de dependencias no la sustituyen.
+En la actualización inicial a Next **16.4.3** pasaron 7 pruebas de comportamiento. La revisión posterior de la API amplió la cobertura a **13 pruebas**, todas aprobadas, con TypeScript, ESLint y build correctos. La integración nativa se comprobó además en un navegador compatible mediante búsqueda HTML, lectura, menú, error de stock, carrito y revisión humana. Esto no demuestra compatibilidad universal de todos los navegadores y clientes.

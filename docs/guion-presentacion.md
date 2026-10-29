@@ -1,39 +1,66 @@
 # WebMCP: guion para presentar
 
-**Aileen Villanueva · 29 de octubre de 2026 · 22 slides · 30 minutos**
+**Aileen Villanueva · 29 de octubre de 2026 · 34 slides · 30 minutos**
 
-El hilo recorre cinco partes: por qué nace WebMCP, qué es, para qué se usa, cómo difiere de MCP y el estado de la propuesta de estándar junto con cómo empezar a usarlo hoy. El demo principal es **TacoAgent**, la aplicación de restaurantes y carrito del repositorio.
+El orden es: **título, qué es WebMCP, para qué sirve, cómo usarla, diferencias con MCP, estándares y demo de TacoAgent**. La definición aparece antes del problema. Los casos de uso y los ejemplos técnicos de la charla original se conservan con fuentes actuales y límites explícitos.
 
-Plan base para ensayar: **18 minutos de explicación, 10 de demo y 2 de cierre**. Son estimaciones, no una presentación humana cronometrada.
+Plan base para ensayar: **20 minutos de explicación, 8 de demo y 2 de cierre**. Son estimaciones, no una presentación humana cronometrada.
 
 ## Recorrido de las slides
 
-| Tiempo aproximado | Slide | Mensaje que desarrolla |
+| Tiempo aproximado | Slide | Bloque |
 | --- | --- | --- |
-| 0:00–0:30 | 1. WebMCP | Las cinco partes y el demo de TacoAgent. |
-| 0:30–1:10 | 2. Por qué nace | Convertir una intención humana en acciones de la página. |
-| 1:10–2:00 | 3. Sarah | El mismo widget de reserva, con UI y con herramientas. |
-| 2:00–2:40 | 4. UI y contrato | addToCart expresa una acción y conserva sus reglas. |
-| 2:40–3:20 | 5. Qué es | Una propuesta de API del navegador para exponer capacidades. |
-| 3:20–4:00 | 6. Quién hace qué | La página declara, el navegador media y el cliente elige. |
-| 4:00–4:40 | 7. Dos APIs | Formulario de búsqueda y funciones para el carrito. |
-| 4:40–5:20 | 8. Usos | Comercio, agendas, aplicaciones de trabajo y herramientas creativas. |
-| 5:20–6:10 | 9. Aisle, Alza y Roque Nights | La disponibilidad debe seguir el contexto de la UI. |
-| 6:10–7:10 | 10. PayPal | Resultados de un sandbox pequeño, con límites visibles. |
-| 7:10–8:10 | 11. MCP y WebMCP | Servidores locales o remotos y documento activo. |
-| 8:10–8:50 | 12. Complementariedad | Pueden compartir servicios y reglas de negocio. |
-| 8:50–9:40 | 13. Estado actual | Propuesta abierta y borrador de Community Group. |
-| 9:40–10:20 | 14. Comprobar soporte | Detectar primero y configurar sólo si falta la API. |
-| 10:20–11:10 | 15. HTML | searchRestaurants como herramienta declarativa. |
-| 11:10–12:10 | 16. JavaScript | viewCart lee el mismo estado que la UI. |
-| 12:10–13:10 | 17. AbortSignal | addToCart depende del menú, checkout depende del carrito. |
-| 13:10–14:00 | 18. Types, Skill y DevTools | Recursos para desarrollar, inspeccionar y evaluar. |
-| 14:00–15:10 | 19. Seguridad | Validación, autorización y revisión humana. |
-| 15:10–18:00 | 20. Feedback | Fallos silenciosos, fileSupportTicket y propuesta OOB. |
-| 18:00–28:00 | 21. Demo: WebMCP en acción | Menú, carrito, errores y confirmación humana en TacoAgent. |
-| 28:00–30:00 | 22. Primer paso | Elegir una capacidad útil y abrir preguntas. |
+| 0:00–0:20 | 1. WebMCP | Título |
+| 0:20–1:00 | 2. Qué es WebMCP | Qué es WebMCP |
+| 1:00–1:45 | 3. Sarah: misma reserva, dos rutas | Qué es WebMCP |
+| 1:45–2:15 | 4. Quién hace qué | Qué es WebMCP |
+| 2:15–2:45 | 5. Una llamada completa | Qué es WebMCP |
+| 2:45–3:15 | 6. Para qué se usa | Para qué sirve |
+| 3:15–3:45 | 7. Viajes: búsqueda y reserva | Para qué sirve |
+| 3:45–4:15 | 8. Comercio: catálogo, carrito y revisión | Para qué sirve |
+| 4:15–4:45 | 9. Soporte y aplicaciones de trabajo | Para qué sirve |
+| 4:45–5:25 | 10. Herramientas según el estado | Para qué sirve |
+| 5:25–6:10 | 11. PayPal: resultados de un sandbox | Para qué sirve |
+| 6:10–6:45 | 12. Beneficios y límites | Para qué sirve |
+| 6:45–7:15 | 13. Adopción gradual en una app existente | Cómo usar WebMCP |
+| 7:15–7:45 | 14. Dos formas de declarar herramientas | Cómo usar WebMCP |
+| 7:45–8:25 | 15. HTML: un formulario como herramienta | Cómo usar WebMCP |
+| 8:25–9:00 | 16. Responder a una búsqueda declarativa | Cómo usar WebMCP |
+| 9:00–9:40 | 17. JavaScript: una herramienta de lectura | Cómo usar WebMCP |
+| 9:40–10:20 | 18. Schema y validación de cantidad | Cómo usar WebMCP |
+| 10:20–11:00 | 19. Resultados que permiten recuperarse | Cómo usar WebMCP |
+| 11:00–11:40 | 20. Registro dinámico con AbortSignal | Cómo usar WebMCP |
+| 11:40–12:15 | 21. Eventos de formularios declarativos | Cómo usar WebMCP |
+| 12:15–12:45 | 22. Feedback visual con CSS | Cómo usar WebMCP |
+| 12:45–13:15 | 23. Tipos y Skill para implementar | Cómo usar WebMCP |
+| 13:15–13:55 | 24. DevTools: probar y evaluar | Cómo usar WebMCP |
+| 13:55–14:45 | 25. Seguridad en la aplicación | Cómo usar WebMCP |
+| 14:45–15:40 | 26. Feedback cuando un agente falla | Cómo usar WebMCP |
+| 15:40–16:20 | 27. Cómo difiere de MCP | Diferencias con MCP |
+| 16:20–17:00 | 28. Protocolo MCP y API WebMCP | Diferencias con MCP |
+| 17:00–17:30 | 29. MCP y WebMCP pueden convivir | Diferencias con MCP |
+| 17:30–18:15 | 30. La propuesta de estándar web, hoy | Estándares |
+| 18:15–19:00 | 31. Una API que sigue evolucionando | Estándares |
+| 19:00–20:00 | 32. Empezar hoy: comprobar soporte | Estándares |
+| 20:00–28:00 | 33. TacoAgent: recorrido del demo | Demo: TacoAgent |
+| 28:00–30:00 | 34. Demo en acción | Demo: TacoAgent |
 
-Las notas de cada slide desarrollan estas ideas y contienen sus fuentes. Los datos son los mismos en la presentación web y el deck editable.
+Las notas de cada slide desarrollan su explicación y contienen fuentes. La presentación web y el deck editable utilizan los mismos datos.
+
+## Mapa del contenido recuperado
+
+| Tema de la charla original | Slides actuales | Qué se conserva y actualiza |
+| --- | --- | --- |
+| Definición y problema | 2–5 | Contrato de acciones y misma reserva con dos rutas. La definición va primero. |
+| Casos de uso y marcas | 6–12 | Viajes, formularios médicos o legales para revisión, comercio, soporte y diagnósticos. Marcas de I/O como experimentos anunciados. |
+| Adopción y APIs | 13–20 | Migración gradual, HTML, handler, JavaScript, schemas, errores y ciclo de vida. |
+| Eventos y CSS | 21–22 | toolactivated, toolcancel y pseudo-clases vigentes. |
+| Buenas prácticas | 23–26 | Tipos, Skill, DevTools, seguridad y feedback después del lanzamiento. |
+| MCP y arquitectura | 27–29 | Contextos, transportes y coexistencia sin reducir MCP a server-to-server. |
+| Estado y setup | 30–32 | Draft actual, migración a document.modelContext y detección de soporte antes de configurar. |
+| Demo | 33–34 | TacoAgent y video local. Sin agenda ni taller como enfoque de la presentación. |
+
+No se recuperan cifras antiguas de uso de IA ni promesas universales de velocidad, determinismo o autorización automática. Los casos de diseño están identificados como ejemplos y las menciones de marcas se limitan al anuncio histórico citado.
 
 ## Ejemplos actuales antes del código
 
@@ -77,15 +104,15 @@ Abrir **Chrome DevTools > Application > WebMCP** para inspeccionar herramientas 
 
 El panel **Ensayo guiado** es un respaldo local: sus botones llaman las mismas funciones de negocio, sin IA y sin fingir una conexión WebMCP. Si se usa, decirlo. Una invocación manual nativa tampoco demuestra que un LLM haya elegido la herramienta.
 
-## Demo de TacoAgent: diez minutos
+## Demo de TacoAgent: ocho minutos
 
-### 0:00–1:00 · Mostrar la UI y el estado
+### 0:00–0:45 · Mostrar la UI y el estado
 
 Pulsar «Reiniciar». Enseñar el catálogo de restaurantes, el carrito vacío y el indicador de soporte. Explicar que búsqueda, menú y carrito también funcionan con los controles humanos.
 
 En el catálogo de la UI hay inicialmente una herramienta declarativa, `searchRestaurants`, y dos imperativas, `getRestaurantInfo` y `viewCart`. El registro imperativo tiene dos herramientas en este estado.
 
-### 1:00–2:00 · Búsqueda declarativa
+### 0:45–1:30 · Búsqueda declarativa
 
 Usar `searchRestaurants` con cocina mexicana y precio sin filtro. En el Inspector, tomar los nombres de campos del formulario:
 
@@ -95,7 +122,7 @@ Usar `searchRestaurants` con cocina mexicana y precio sin filtro. En el Inspecto
 
 Mostrar que la búsqueda devuelve restaurantes y sus IDs. Señalar `toolname`, `tooldescription` y `toolautosubmit` en el formulario. Este envío automático corresponde a una búsqueda que no crea pedidos.
 
-### 2:00–3:00 · Abrir un menú
+### 1:30–2:15 · Abrir un menú
 
 Ejecutar `getRestaurantInfo`:
 
@@ -105,7 +132,7 @@ Ejecutar `getRestaurantInfo`:
 
 El menú de Taco Loco aparece en la UI y devuelve productos, precios e IDs. La herramienta `addToCart` pasa a estar disponible. Este callback cambia la selección, por lo que no se describe como una lectura pura.
 
-### 3:00–4:30 · Agregar productos
+### 2:15–3:15 · Agregar productos
 
 Ejecutar `addToCart`:
 
@@ -121,7 +148,7 @@ En los datos ficticios, «Tacos de Carnitas» es una orden de tres tacos. Quanti
 
 Cada llamada a `addToCart` agrega una línea de productos. Consultar el carrito antes de repetir una llamada si no se sabe si ya se ejecutó.
 
-### 4:30–5:30 · Un error que permite corregir
+### 3:15–4:15 · Un error que permite corregir
 
 Intentar un producto agotado:
 
@@ -135,13 +162,13 @@ Intentar un producto agotado:
 
 La respuesta informa que no está disponible y el carrito válido permanece. Como alternativa, probar `quantity: 0` para mostrar que el contrato y la función rechazan una cantidad inválida. La app exige un entero entre 1 y 10.
 
-### 5:30–6:30 · Comparar respuesta y estado
+### 4:15–5:00 · Comparar respuesta y estado
 
 Ejecutar `viewCart` con `{}`. La respuesta contiene `success`, `message`, `items`, `itemCount`, `total` y `currency`. Comparar productos y total con la UI.
 
 Frase útil: «La herramienta y la persona leen el mismo estado. El esquema explica los argumentos y la función aplica las reglas.»
 
-### 6:30–8:00 · Disponibilidad dinámica
+### 5:00–6:00 · Disponibilidad dinámica
 
 Con productos aparecen `clearCart` y `checkout`. Vaciar con `clearCart` y observar que esas operaciones desaparecen. El menú queda abierto, así que `addToCart` sigue disponible. Agregar otra vez las dos órdenes para continuar.
 
@@ -154,13 +181,15 @@ Con productos aparecen `clearCart` y `checkout`. Vaciar con `clearCart` y observ
 
 Mostrar `ToolRegistry` en `lib/webmcp.ts`: conserva registros que siguen siendo válidos y retira los demás con `AbortController`. Retirar un registro no cancela por sí mismo una ejecución activa.
 
-### 8:00–10:00 · Revisión y confirmación humana
+### 6:00–8:00 · Revisión y confirmación humana
 
 Ejecutar `checkout` con `{}`. Devuelve `success: true` y `status: "pending-human-review"`. Se abre un diálogo con productos y total.
 
 La persona compara el carrito y pulsa **Confirmar pedido ficticio**. `confirmOrder` sólo pertenece a ese botón y no está registrado como herramienta. La app muestra un ID de pedido local y vacía el carrito. No hay cobro, envío ni almacenamiento de datos personales.
 
 Decir: «La herramienta preparó la revisión. La persona confirmó un efecto concreto después de verlo.»
+
+El video local de respaldo está enlazado en la slide 34 y disponible en `http://127.0.0.1:3001/demo-backup/TacoAgent-WebMCP-respaldo.mp4`.
 
 ## Respaldo local sin IA
 

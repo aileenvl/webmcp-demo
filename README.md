@@ -2,7 +2,7 @@
 
 Material en español de **Aileen Villanueva** para una sesión de **30 minutos**, actualizado el **29 de octubre de 2026**. **TacoAgent, el demo de este repositorio, es el ejemplo principal de la charla.**
 
-La presentación contiene **22 slides** y recorre cinco partes: **por qué nace WebMCP**, **qué es**, **para qué se usa**, **cómo difiere de MCP**, y **estado de la propuesta y cómo empezar hoy**. Plan de ensayo: **18 minutos de explicación, 10 de demo y 2 de cierre**.
+La presentación contiene **34 slides** y sigue este orden: **título → qué es WebMCP → para qué sirve → cómo usarlo → diferencias con MCP → estándares → demo de TacoAgent**. Recupera los casos de uso, eventos, CSS y prácticas de la charla original y los contrasta con las fuentes actuales. Plan de ensayo: **20 minutos de explicación, 8 de demo y 2 de cierre**.
 
 TacoAgent es una tienda ficticia: busca restaurantes, abre un menú, agrega productos al carrito y solicita la revisión de un pedido. Una persona confirma desde la interfaz. No hay pagos, envíos ni pedidos reales. Los datos viven en memoria y se reinician al recargar.
 
@@ -20,11 +20,14 @@ Con el puerto 3000 por defecto:
 | Material | Enlace |
 | --- | --- |
 | Demo TacoAgent | [localhost:3000](http://localhost:3000) |
-| Presentación · 22 slides | [localhost:3000/slides/index.html](http://localhost:3000/slides/index.html) |
+| Presentación · 34 slides | [localhost:3000/slides/index.html](http://localhost:3000/slides/index.html) |
+| Video de respaldo · 2 minutos | [MP4 local](http://localhost:3000/demo-backup/TacoAgent-WebMCP-respaldo.mp4) |
 
 Si usas otro puerto, cambia sólo `3000` en esos enlaces. La presentación estática termina en `index.html`. Usa **←/→** para navegar, **G** para el índice, **N** para notas y fuentes y **F** para pantalla completa.
 
-El [guion de la presentación](docs/guion-presentacion.md) desarrolla las cinco partes; el [guion de 10 minutos del demo](docs/guion-demo.md) contiene las llamadas, resultados y respaldo con el panel local. La [nota de adaptación](docs/actualizacion-2026-10-29.md) y la [cobertura de fuentes](docs/fuentes-y-cobertura.md) explican el material incorporado.
+El [guion de la presentación](docs/guion-presentacion.md) desarrolla el orden de la charla; el [guion de 8 minutos del demo](docs/guion-demo.md) contiene las llamadas, resultados y respaldo con el panel local. La [nota de adaptación](docs/actualizacion-2026-10-29.md), la [cobertura de fuentes](docs/fuentes-y-cobertura.md) y la [revisión de la API](docs/revision-api-2026-10-29.md) explican el material recuperado y sus actualizaciones.
+
+El video incorpora textos en español y no tiene audio, para narrarlo en vivo. Descarga o copia el MP4 antes del evento: su reproducción no requiere internet ni el servidor local. Las slides de la web necesitan que el servidor local esté ejecutándose.
 
 ## Herramientas de TacoAgent
 
