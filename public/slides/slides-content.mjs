@@ -5,8 +5,8 @@ export const slides = [
     "title": "WebMCP",
     "subtitle": "Prepara tu webapp para los agentes de nuestro día a día\nAileen Villanueva",
     "color": "dark",
-    "caption": "Una charla con ejemplos actuales y un demo de agenda",
-    "notes": "0:00–0:30. Hoy recorreremos cinco partes: por qué nace WebMCP, qué es, para qué se usa, cómo difiere de MCP y el estado de la propuesta de estándar junto con cómo empezar a usarlo hoy. Primero veremos una misma reserva con dos formas de controlarla. Después iremos al código y terminaremos con una agenda real del demo: la aplicación valida horarios y una persona confirma. La presentación está actualizada al 29 de octubre de 2026. El plan para 30 minutos es unos 17 de explicación, 10–12 de taller central y 1–3 de cierre. Son estimaciones para ensayar, no una duración humana cronometrada.",
+    "caption": "Una charla con ejemplos actuales y un demo de TacoAgent",
+    "notes": "0:00–0:30. Hoy recorreremos cinco partes: por qué nace WebMCP, qué es, para qué se usa, cómo difiere de MCP y el estado de la propuesta de estándar junto con cómo empezar a usarlo hoy. Veremos una misma reserva con dos rutas de control y después el código. Terminaremos en TacoAgent: consultar un menú, preparar un carrito y pedir revisión humana. El plan para 30 minutos es unos 18 de explicación, 10 de demo y 2 de cierre. Son estimaciones para ensayar, no una duración humana cronometrada.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp"
     ]
@@ -17,7 +17,7 @@ export const slides = [
     "title": "Por qué nace WebMCP",
     "color": "dark",
     "content": [
-      "La persona pide: «Agrega esta charla a mi agenda»",
+      "La persona pide: «Agrega dos órdenes de tacos a mi carrito»",
       "El agente debe entender qué acciones ofrece la página y con qué datos",
       "Una UI puede exigir interpretar el DOM, el árbol de accesibilidad o capturas",
       "WebMCP propone un contrato explícito para las acciones que el sitio permite"
@@ -60,12 +60,12 @@ export const slides = [
     "color": "dark",
     "content": [
       "La UI muestra el catálogo, la selección y el resultado",
-      "El contrato nombra una acción del producto: agregar_sesion",
-      "El esquema describe entradas; la aplicación valida las reglas",
+      "El contrato nombra una acción del producto: addToCart",
+      "El esquema describe entradas; la app valida cantidad, menú y stock",
       "La respuesta y el estado visible deben contar la misma historia"
     ],
     "caption": "Una herramienta útil expresa una acción, no una secuencia de clics",
-    "notes": "2:00–2:40. Una interfaz explica el producto a las personas. El contrato de herramientas añade otra forma de operar ese producto. En la agenda, agregar_sesion significa añadir una sesión conocida al borrador. No significa buscar un botón y hacer clic. Esa acción tiene reglas que ya pertenecen a la app: no duplicar, no cruzar horarios y no modificar una agenda finalizada. El callback debe reutilizar esa lógica. Si devuelve ADDED, la sesión también debe verse en la agenda.",
+    "notes": "2:00–2:40. Una interfaz explica el producto a las personas. El contrato de herramientas añade otra forma de operar ese producto. En TacoAgent, addToCart significa agregar un producto del menú abierto. La aplicación comprueba el restaurante, que el producto esté disponible y que quantity sea un entero entre uno y diez. El callback reutiliza esa lógica. El resultado describe el cambio y el carrito debe mostrar los mismos productos y total. La herramienta expresa una acción de negocio en vez de una secuencia de clics.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/build-tools"
     ]
@@ -134,8 +134,8 @@ export const slides = [
       "• Define inputSchema y execute",
       "• Puede cambiar con el estado de la página"
     ],
-    "caption": "Las APIs son complementarias. Nuestro demo de agenda usa la imperativa.",
-    "notes": "4:00–4:40. La API declarativa encaja cuando ya existe un formulario que expresa la acción. HTML aporta el nombre de la herramienta y los campos que el navegador convierte en parámetros. La API imperativa permite declarar funciones en JavaScript y decidir cuándo deben existir. Podemos combinar ambas dentro del mismo producto. La agenda que veremos utiliza sólo la imperativa para que se vea con claridad cómo el registro sigue la selección y cómo UI y herramientas comparten la lógica.",
+    "caption": "TacoAgent combina búsqueda declarativa y operaciones de carrito imperativas.",
+    "notes": "4:00–4:40. La API declarativa encaja cuando ya existe un formulario que expresa la acción. HTML aporta el nombre de la herramienta y los campos que el navegador convierte en parámetros. La API imperativa permite declarar funciones en JavaScript y decidir cuándo deben existir. TacoAgent combina ambas: searchRestaurants procede del formulario HTML, mientras abrir un menú, consultar o modificar el carrito y solicitar revisión se ofrecen con JavaScript. La UI y las herramientas comparten el mismo estado y las mismas reglas.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/declarative-api",
       "https://developer.chrome.com/docs/ai/webmcp/imperative-api"
@@ -261,7 +261,7 @@ export const slides = [
       "La aplicación sigue validando. La persona revisa lo que tiene consecuencias."
     ],
     "caption": "El criterio es dónde vive la capacidad y qué contexto necesita",
-    "notes": "8:10–8:50. Imaginemos un servicio de eventos usado por varias aplicaciones. Un servidor MCP podría ofrecer datos de ese servicio a distintos clientes. La página de una conferencia, en cambio, puede exponer la agenda que la persona está editando y la sesión que tiene seleccionada. Las dos integraciones pueden coexistir y apoyarse en el mismo backend. La decisión de arquitectura depende de dónde vive la capacidad y del contexto que necesita para ejecutarse correctamente.",
+    "notes": "8:10–8:50. Imaginemos un catálogo que utilizan varias aplicaciones. Un servidor MCP puede ofrecer consultas sobre ese servicio a distintos clientes. La tienda abierta, en cambio, puede exponer mediante WebMCP el menú seleccionado y el carrito que la persona está preparando. Las dos integraciones pueden coexistir y apoyarse en el mismo backend. La decisión depende de dónde vive la capacidad y del contexto que necesita para ejecutarse. En una compra, preparar el carrito y aprobar el pago siguen siendo pasos distintos.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/compare-mcp"
     ]
@@ -278,7 +278,7 @@ export const slides = [
       "La API y su disponibilidad evolucionan según navegador y cliente"
     ],
     "caption": "Draft Community Group Report. No es un estándar W3C ni está en Standards Track.",
-    "notes": "8:50–9:40. Cuando hablamos de WebMCP como una propuesta de estándar web, hablamos de un proceso abierto y de una API que sigue evolucionando. La publicación actual del Community Group es del 27 de octubre de 2026. Podemos probar implementaciones hoy y aportar feedback sin confundir ese estado con una recomendación W3C. El demo de referencia ya se comprobó con la API nativa en Chrome 156 en una sesión previa. Eso es evidencia de ese entorno, no una promesa de soporte universal ni una nueva prueba realizada para estas slides.",
+    "notes": "8:50–9:40. WebMCP avanza como propuesta abierta de API web. La publicación actual del Community Group es del 27 de octubre de 2026. Podemos probar implementaciones y aportar feedback sin confundir ese estado con una recomendación W3C. La disponibilidad depende del navegador y del cliente que utilicemos. Antes de presentar TacoAgent comprobaremos document.modelContext en la pestaña concreta. Las slides no convierten una prueba en otro entorno en una garantía de compatibilidad para este navegador.",
     "sources": [
       "https://webmachinelearning.github.io/webmcp/",
       "https://github.com/webmachinelearning/webmcp/blob/main/implementation-status.md",
@@ -303,10 +303,10 @@ export const slides = [
     "type": "code",
     "title": "HTML: un formulario como herramienta",
     "color": "dark",
-    "code": "<form toolname=\"buscar_sesiones\"\n  tooldescription=\"Busca sesiones por título\">\n  <label>Título\n    <input name=\"titulo\" required>\n  </label>\n  <button type=\"submit\">Buscar</button>\n</form>",
-    "codeLanguage": "API declarativa · Ejemplo ilustrativo",
-    "caption": "Sin toolautosubmit, la persona realiza el envío. La interfaz sigue visible.",
-    "notes": "10:20–11:10. Este ejemplo ilustrativo toma un formulario de búsqueda y declara su propósito. El nombre de la herramienta describe la acción y el campo titulo define un parámetro requerido. Sin toolautosubmit, el agente puede preparar los datos y la persona realiza el envío. Si el desarrollador añade ese atributo, permite el envío automático del formulario. Conviene decidirlo según el efecto de la acción. El demo de agenda usa JavaScript; este formulario sirve para mostrar la otra ruta de integración.",
+    "code": "<form toolname=\"searchRestaurants\"\n  tooldescription=\"Busca restaurantes por cocina\"\n  toolautosubmit>\n  <label>Cocina <select name=\"cuisine\">\n    <option value=\"mexicana\">Mexicana</option>\n  </select></label>\n  <button type=\"submit\">Buscar</button>\n</form>",
+    "codeLanguage": "API declarativa · Extracto del formulario de TacoAgent",
+    "caption": "toolautosubmit permite al agente enviar esta búsqueda. La UI sigue visible.",
+    "notes": "10:20–11:10. El formulario real de TacoAgent declara searchRestaurants y describe una búsqueda de restaurantes. cuisine y priceRange son sus parámetros. Este extracto muestra cocina mexicana; la UI completa también permite filtrar precio. toolautosubmit permite al agente enviar directamente esta búsqueda. El handler de submit usa la misma función de búsqueda que el recorrido humano y devuelve su resultado cuando la llamada procede del agente. Podemos quitar toolautosubmit en un formulario cuyo envío deba quedar en manos de la persona.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/declarative-api"
     ]
@@ -316,10 +316,10 @@ export const slides = [
     "type": "code",
     "title": "JavaScript: una herramienta de lectura",
     "color": "dark",
-    "code": "await document.modelContext.registerTool({\n  name: \"listar_sesiones\",\n  description: \"Lee catálogo y agenda actual\",\n  inputSchema: { type: \"object\", properties: {} },\n  annotations: { readOnlyHint: true },\n  execute: async () => JSON.stringify({\n    code: \"STATE\", ...agenda.snapshot()\n  })\n});",
-    "codeLanguage": "API imperativa · El callback reutiliza la lógica de la app",
-    "caption": "El schema describe el contrato. El código valida y aplica las reglas.",
-    "notes": "11:10–12:10. Una herramienta de lectura es un primer paso fácil de comprobar. listar_sesiones devuelve el catálogo, la agenda y su estado. El nombre y la descripción ayudan al cliente a elegirla. El esquema expresa los argumentos y execute reutiliza el objeto de negocio. El ejemplo es un extracto: la implementación del demo también valida que llegue un objeto vacío. readOnlyHint declara intención de lectura, pero la aplicación debe hacerla cumplir. El resultado STATE debe coincidir con lo que muestra la UI.",
+    "code": "await document.modelContext.registerTool({\n  name: \"viewCart\",\n  description: \"Consulta el carrito y total en MXN\",\n  inputSchema: { type: \"object\", properties: {} },\n  annotations: { readOnlyHint: true },\n  execute: async input => store.run(\"viewCart\", input)\n});",
+    "codeLanguage": "API imperativa · Lectura del mismo DemoStore de la app",
+    "caption": "viewCart funciona también con el carrito vacío y devuelve un resultado estructurado.",
+    "notes": "11:10–12:10. viewCart es una primera herramienta de lectura fácil de comprobar. En el código de TacoAgent, la definición llama al mismo DemoStore que utiliza la UI. El resultado contiene success, message, items, itemCount, total y currency. El nombre, la descripción y el esquema explican el contrato. readOnlyHint comunica intención de lectura, pero la implementación debe hacerla cumplir. El fragmento resume la definición: el registro real pasa una señal para controlar su ciclo de vida y el adaptador también muestra el último resultado en la interfaz.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/imperative-api"
     ]
@@ -329,10 +329,10 @@ export const slides = [
     "type": "code",
     "title": "Registro dinámico con AbortSignal",
     "color": "dark",
-    "code": "const lifetime = new AbortController();\nawait document.modelContext.registerTool(\n  editarSesionSeleccionadaTool,\n  { signal: lifetime.signal }\n);\n\n// Cuando la selección deja de ser válida\nlifetime.abort();",
-    "codeLanguage": "La herramienta contextual existe mientras tiene sentido",
-    "caption": "En la agenda: 4 herramientas, luego 5 al seleccionar y 4 al limpiar.",
-    "notes": "12:10–13:10. El registro acepta una señal que controla la vida de la herramienta. En la agenda hay cuatro herramientas base. Al seleccionar una sesión ya añadida aparece editar_sesion_seleccionada. Al limpiar la selección vuelve a haber cuatro. Hay que validar la selección dentro de execute aunque la herramienta estuviera disponible al iniciar la llamada. La señal de registro no cancela por sí misma ejecuciones ya activas. Si una operación sigue usando recursos, coordinamos su finalización antes de desmontarlos.",
+    "code": "const context = document.modelContext;\nconst controller = new AbortController();\nawait context.registerTool(tool, {\n  signal: controller.signal\n});\n\n// Cuando desaparece su precondición\ncontroller.abort();",
+    "codeLanguage": "Extracto de ToolRegistry en lib/webmcp.ts",
+    "caption": "addToCart aparece al abrir un menú. clearCart y checkout requieren productos.",
+    "notes": "12:10–13:10. TacoAgent empieza con getRestaurantInfo y viewCart como herramientas imperativas, además de la búsqueda declarativa. Abrir un menú incorpora addToCart. Cuando hay productos, aparecen clearCart y checkout. Al vaciar o confirmar el carrito, esas dos operaciones se retiran. ToolRegistry mantiene los registros que siguen siendo válidos y usa AbortController para retirar los demás. La función también revalida el estado al ejecutar. Retirar el registro no cancela automáticamente una ejecución que ya esté activa.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/imperative-api",
       "https://developer.chrome.com/docs/modern-web-guidance/guides/webmcp/agentic-javascript-tools"
@@ -397,11 +397,11 @@ export const slides = [
       {
         "icon": "user-check",
         "label": "Revisión humana",
-        "description": "Preparar un resumen no confirma una agenda ni aprueba un pago."
+        "description": "Solicitar revisión no confirma un pedido ni aprueba un pago."
       }
     ],
     "caption": "Las annotations comunican intención. El código aplica los controles.",
-    "notes": "14:00–15:10. Un esquema claro ayuda a llamar bien la herramienta, pero el código debe validar las entradas y el estado actual. Los límites del navegador y los permisos de negocio son controles distintos. Si hay backend, debe autorizar las operaciones. Las anotaciones como readOnlyHint o untrustedContentHint comunican intención y tratamiento del contenido. No hacen cumplir esas reglas por sí solas. En la agenda, preparar_confirmacion sólo abre una revisión. La confirmación pertenece al botón de la persona y cualquier cambio invalida lo revisado.",
+    "notes": "14:00–15:10. Un esquema ayuda a llamar bien una herramienta, pero el código valida las entradas y el estado. Los límites del navegador y los permisos de negocio son controles distintos. Si hay backend, debe autorizar las operaciones. Las anotaciones comunican intención, no hacen cumplir esas reglas por sí solas. En TacoAgent, checkout sólo abre la revisión y devuelve pending-human-review. La persona compara el contenido y el total, y pulsa Confirmar pedido ficticio. La confirmación no está registrada como herramienta y un cambio en el carrito invalida la revisión.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp/secure-tools"
     ]
@@ -418,7 +418,7 @@ export const slides = [
       "Hoy: telemetría propia de herramientas, errores y abandonos"
     ],
     "caption": "André Bandarra · El reporting OOB todavía no es una API WebMCP estandarizada.",
-    "notes": "15:10–17:00. André Bandarra describe un problema después del lanzamiento: las llamadas exitosas dejan señales, pero un agente que abandona puede no comunicar qué capacidad le faltó. Una herramienta como fileSupportTicket intenta resolverlo dentro del mismo flujo, con posibles permisos adicionales y puntos ciegos. Su artículo propone un canal fuera de ese flujo, inspirado en Reporting API. Esa propuesta no es una API WebMCP estandarizada que activemos hoy. Mientras tanto podemos observar nuestras funciones, errores y recorridos, minimizando datos sensibles.",
+    "notes": "15:10–18:00. André Bandarra describe un problema después del lanzamiento: las llamadas exitosas dejan señales, pero un agente que abandona puede no comunicar qué capacidad le faltó. Una herramienta como fileSupportTicket intenta resolverlo dentro del mismo flujo, con posibles permisos adicionales y puntos ciegos. Su artículo propone un canal fuera de ese flujo, inspirado en Reporting API. Esa propuesta no es una API WebMCP estandarizada que activemos hoy. Mientras tanto podemos observar nuestras funciones, errores y recorridos, minimizando datos sensibles.",
     "sources": [
       "https://bandarra.me/posts/webmcp-feedback-loop"
     ]
@@ -426,22 +426,22 @@ export const slides = [
   {
     "id": 21,
     "type": "demo",
-    "title": "Taller: construir la agenda paso a paso",
+    "title": "Demo: WebMCP en acción",
     "color": "dark",
     "content": [
-      "0 App normal: los botones ya funcionan, todavía sin tools",
-      "1 Lectura: listar_sesiones devuelve STATE",
-      "2 Mutación y 3 respuesta útil: ADDED, ALREADY_ADDED y TIME_CONFLICT",
-      "4 Contexto: seleccionar habilita editar_sesion_seleccionada",
-      "5 Revisión: CONFIRMATION_REQUIRED y confirmación desde la UI"
+      "Consultar restaurantes y abrir un menú con getRestaurantInfo",
+      "Agregar productos con addToCart y comprobar viewCart",
+      "Probar un producto agotado y observar el error",
+      "checkout solicita revisión: pending-human-review",
+      "La persona confirma el pedido ficticio desde la UI"
     ],
-    "caption": "Taller central estimado: 10–12 minutos. Datos ficticios y locales. Inspector manual, sin LLM.",
-    "notes": "17:00–28:00. El taller central recorre seis checkpoints y estima 10–12 minutos dentro de los 30 de la charla. En el paso 0 mostramos una app con botones y cero tools. En el paso 1 publicamos listar_sesiones y ejecutamos {} para leer STATE. El paso 2 agrega mutación y JSON Schema, pero devuelve «Listo.» deliberadamente: el estado se protege, la respuesta no explica el resultado. En el paso 3 conservamos la respuesta del dominio: ADDED, ALREADY_ADDED y TIME_CONFLICT con una alternativa. El paso 4 incorpora selección y edición contextual. El paso 5 prepara revisión y deja confirmar a la persona. En el checkpoint 5 y la app final se observan cuatro, cinco y cuatro tools al seleccionar y limpiar. Cada cambio de checkpoint recarga y reinicia datos. Esta es una inspección manual sin LLM, con llamadas nativas cuando la pantalla lo indica. Si no hay tiempo, la app final sirve para un recorrido compacto de 5–7 minutos. Estas duraciones son estimaciones para el ensayo.",
+    "caption": "TacoAgent · Menú, carrito y revisión humana. Sin cobro ni envío real.",
+    "notes": "18:00–28:00. Abrir TacoAgent y comprobar el indicador de soporte nativo. Mostrar primero la UI y después las herramientas. searchRestaurants busca cocina mexicana. getRestaurantInfo con restaurantId taco-loco abre el menú y habilita addToCart. Intentar menuItemId quesadilla para mostrar que un producto agotado no entra al carrito. Agregar dos órdenes de taco-carnitas con quantity 2 y comparar viewCart con el total visible de MXN25.98. Mostrar clearCart y checkout disponibles con productos. checkout devuelve status pending-human-review y abre el diálogo. La persona revisa y pulsa Confirmar pedido ficticio. El pedido es local, sin cobro, envío ni datos personales. El Inspector permite probar llamadas nativas manualmente. Los botones de Ensayo guiado ejecutan JavaScript local sin IA y no demuestran una conexión WebMCP.",
     "sources": [
-      "http://127.0.0.1:3001/agenda/taller/index.html?paso=0",
-      "http://127.0.0.1:3001/agenda/index.html"
+      "http://127.0.0.1:3001/",
+      "https://github.com/aileenvl/webmcp-demo"
     ],
-    "demoUrl": "http://127.0.0.1:3001/agenda/taller/index.html?paso=0"
+    "demoUrl": "http://127.0.0.1:3001/"
   },
   {
     "id": 22,
@@ -453,16 +453,16 @@ export const slides = [
       "Declarar el contrato y reutilizar las reglas de la aplicación",
       "Probar errores y estado visible; después evaluar con un agente",
       "Docs: developer.chrome.com/docs/ai/webmcp",
-      "Taller guiado: /agenda/taller/index.html?paso=0"
+      "Demo: TacoAgent, menú y carrito con revisión humana"
     ],
     "caption": "La página declara. El cliente elige. La aplicación valida. La persona revisa.",
-    "notes": "28:00–30:00. Para empezar no hace falta rehacer la web. Podemos elegir una acción de lectura o un borrador que tenga un resultado comprobable. Detectamos soporte, declaramos la herramienta y probamos entradas válidas, errores y cambios visibles. Después evaluamos las decisiones con un agente compatible. Ya vimos por qué nace WebMCP, qué es, dónde sirve, cómo convive con MCP y cuál es el estado de la propuesta. Las fuentes, tipos, Skill y DevTools están enlazados en esta presentación. Abrimos preguntas. El taller central ya mostró la construcción; la app final queda como respaldo para repetir el recorrido.",
+    "notes": "28:00–30:00. Para empezar no hace falta rehacer la web. Podemos elegir una capacidad de lectura, como viewCart, con un resultado comprobable. Detectamos soporte, declaramos la herramienta y probamos entradas válidas, errores y cambios visibles. Después evaluamos las decisiones con un agente compatible. Ya vimos por qué nace WebMCP, qué es, dónde sirve, cómo convive con MCP y cuál es el estado de la propuesta. TacoAgent mostró las dos APIs y la revisión humana al final del flujo. Abrimos preguntas. Las fuentes, tipos, Skill y DevTools quedan enlazados en la presentación.",
     "sources": [
       "https://developer.chrome.com/docs/ai/webmcp",
       "https://github.com/webmachinelearning/webmcp-types",
       "https://github.com/GoogleChromeLabs/webmcp-tools",
-      "http://127.0.0.1:3001/agenda/taller/index.html?paso=0"
+      "https://github.com/aileenvl/webmcp-demo"
     ],
-    "demoUrl": "http://127.0.0.1:3001/agenda/taller/index.html?paso=0"
+    "demoUrl": "http://127.0.0.1:3001/"
   }
 ]

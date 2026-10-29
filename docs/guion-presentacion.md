@@ -2,171 +2,179 @@
 
 **Aileen Villanueva · 29 de octubre de 2026 · 22 slides · 30 minutos**
 
-El hilo recorre cinco partes en el orden solicitado: por qué nace WebMCP, qué es, para qué se usa, cómo difiere de MCP y el estado de la propuesta de estándar junto con cómo empezar a usarlo hoy. El taller de agenda es la parte central de la demostración.
+El hilo recorre cinco partes: por qué nace WebMCP, qué es, para qué se usa, cómo difiere de MCP y el estado de la propuesta de estándar junto con cómo empezar a usarlo hoy. El demo principal es **TacoAgent**, la aplicación de restaurantes y carrito del repositorio.
 
-Plan base: unos **17 minutos de explicación, 11 de taller y 2 de cierre**. La guía del taller estima **10–12 minutos** para sus seis checkpoints. Ajusta la explicación y las preguntas tras el ensayo para respetar los 30 minutos. No se ha cronometrado una presentación humana.
+Plan base para ensayar: **18 minutos de explicación, 10 de demo y 2 de cierre**. Son estimaciones, no una presentación humana cronometrada.
 
 ## Recorrido de las slides
 
 | Tiempo aproximado | Slide | Mensaje que desarrolla |
 | --- | --- | --- |
-| 0:00–0:30 | 1. WebMCP | Las preguntas que resolveremos y el demo de agenda. |
-| 0:30–1:10 | 2. Por qué nace | Una intención humana necesita convertirse en acciones de una página. |
-| 1:10–2:00 | 3. Sarah | El mismo widget de reserva puede controlarse interpretando UI o llamando herramientas. |
-| 2:00–2:40 | 4. UI y contrato | La acción expresa el propósito del producto y reutiliza sus reglas. |
-| 2:40–3:20 | 5. Qué es | Una API propuesta del navegador para exponer capacidades del documento. |
+| 0:00–0:30 | 1. WebMCP | Las cinco partes y el demo de TacoAgent. |
+| 0:30–1:10 | 2. Por qué nace | Convertir una intención humana en acciones de la página. |
+| 1:10–2:00 | 3. Sarah | El mismo widget de reserva, con UI y con herramientas. |
+| 2:00–2:40 | 4. UI y contrato | addToCart expresa una acción y conserva sus reglas. |
+| 2:40–3:20 | 5. Qué es | Una propuesta de API del navegador para exponer capacidades. |
 | 3:20–4:00 | 6. Quién hace qué | La página declara, el navegador media y el cliente elige. |
-| 4:00–4:40 | 7. Dos APIs | Formularios HTML y funciones JavaScript. |
+| 4:00–4:40 | 7. Dos APIs | Formulario de búsqueda y funciones para el carrito. |
 | 4:40–5:20 | 8. Usos | Comercio, agendas, aplicaciones de trabajo y herramientas creativas. |
-| 5:20–6:10 | 9. Aisle, Alza y Roque Nights | Las herramientas disponibles deben seguir el contexto de la UI. |
-| 6:10–7:10 | 10. PayPal | Resultados prometedores de un sandbox pequeño, con sus límites visibles. |
-| 7:10–8:10 | 11. MCP y WebMCP | Servidores locales o remotos frente a capacidades del documento activo. |
-| 8:10–8:50 | 12. Complementariedad | Pueden compartir servicios y reglas sin ser la misma integración. |
-| 8:50–9:40 | 13. Estado actual | Propuesta abierta y borrador de Community Group del 27 de octubre. |
-| 9:40–10:20 | 14. Comprobar soporte | Detectar primero; configurar sólo si falta la API. |
-| 10:20–11:10 | 15. HTML | El formulario describe la acción y los campos describen parámetros. |
-| 11:10–12:10 | 16. JavaScript | Una lectura permite comprobar contrato, llamada y estado. |
-| 12:10–13:10 | 17. AbortSignal | La selección incorpora o retira la edición contextual. |
-| 13:10–14:00 | 18. Types, Skill y DevTools | Recursos concretos para desarrollar, inspeccionar y evaluar. |
-| 14:00–15:10 | 19. Seguridad | Validación, autorización, datos no confiables y revisión humana. |
-| 15:10–17:00 | 20. Feedback | Qué perdemos cuando el agente abandona y qué propone el reporting OOB. |
-| 17:00–28:00 | 21. Taller | Construir la agenda en seis checkpoints. |
-| 28:00–30:00 | 22. Primer paso | Elegir una capacidad útil, probarla y abrir preguntas. |
+| 5:20–6:10 | 9. Aisle, Alza y Roque Nights | La disponibilidad debe seguir el contexto de la UI. |
+| 6:10–7:10 | 10. PayPal | Resultados de un sandbox pequeño, con límites visibles. |
+| 7:10–8:10 | 11. MCP y WebMCP | Servidores locales o remotos y documento activo. |
+| 8:10–8:50 | 12. Complementariedad | Pueden compartir servicios y reglas de negocio. |
+| 8:50–9:40 | 13. Estado actual | Propuesta abierta y borrador de Community Group. |
+| 9:40–10:20 | 14. Comprobar soporte | Detectar primero y configurar sólo si falta la API. |
+| 10:20–11:10 | 15. HTML | searchRestaurants como herramienta declarativa. |
+| 11:10–12:10 | 16. JavaScript | viewCart lee el mismo estado que la UI. |
+| 12:10–13:10 | 17. AbortSignal | addToCart depende del menú, checkout depende del carrito. |
+| 13:10–14:00 | 18. Types, Skill y DevTools | Recursos para desarrollar, inspeccionar y evaluar. |
+| 14:00–15:10 | 19. Seguridad | Validación, autorización y revisión humana. |
+| 15:10–18:00 | 20. Feedback | Fallos silenciosos, fileSupportTicket y propuesta OOB. |
+| 18:00–28:00 | 21. Demo: WebMCP en acción | Menú, carrito, errores y confirmación humana en TacoAgent. |
+| 28:00–30:00 | 22. Primer paso | Elegir una capacidad útil y abrir preguntas. |
 
-Las notas de cada slide contienen un texto natural para desarrollar estas ideas y sus fuentes. Los mismos datos alimentan la presentación web y el deck editable.
+Las notas de cada slide desarrollan estas ideas y contienen sus fuentes. Los datos son los mismos en la presentación web y el deck editable.
 
-## Ejemplos que se cuentan antes del código
+## Ejemplos actuales antes del código
 
 ### Sarah: misma reserva, dos rutas
 
-Abrir o mostrar la [demo de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/). Ambos lados utilizan el mismo widget de reserva y buscan el mismo resultado. Una ruta interpreta la interfaz; la otra expone tres herramientas. Los 40+ nodos y las tres herramientas pertenecen a ese ejemplo didáctico. **No presentar esta comparación como un benchmark** de costo, velocidad o seguridad.
+La [demo de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/) compara dos rutas de control sobre el mismo widget. Una interpreta la UI y la otra llama tres herramientas. Los nodos y tools ilustran ese caso. **No es un benchmark** de costo, velocidad o seguridad.
 
-Una frase útil: «La diferencia que quiero enseñar es quién explica la acción. En una ruta el agente interpreta los controles. En la otra el sitio declara la capacidad y los argumentos que necesita.»
+Una frase útil: «En una ruta el agente interpreta los controles. En la otra el sitio declara la capacidad y los argumentos que necesita.»
 
 ### Aisle, Alza y Roque Nights
 
-Estos ejemplos proceden del texto de André Bandarra aportado en la conversación:
+Los ejemplos proceden del texto de André Bandarra aportado en la conversación:
 
-- Aisle ofrece `finalize_chart` cuando todos los invitados tienen asiento y no hay violaciones de reglas.
-- Alza ofrece `extend_selected_wall` cuando existe una sola pared seleccionada.
-- Roque Nights espera a las llamadas activas antes de retirar herramientas.
+- Aisle habilita `finalize_chart` cuando todos los invitados tienen asiento y no hay violaciones de reglas.
+- Alza ofrece `extend_selected_wall` con una sola pared seleccionada.
+- Roque Nights espera las llamadas activas antes de retirar herramientas.
 
-Conectar con nuestra agenda: «Editar la sesión seleccionada tiene sentido mientras hay una selección válida. Al cambiar ese contexto, debe cambiar el registro.»
+Conectar con TacoAgent: «Agregar un producto requiere un menú abierto. Solicitar checkout requiere un carrito con productos. El registro debe reflejar esas precondiciones.»
 
-### PayPal: el alcance de las cifras
+### PayPal: alcance de las cifras
 
-La [publicación de PayPal del 16 de septiembre de 2026](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/) compara la compra de una tarjeta de regalo en una tienda de pruebas. Informa aproximadamente 4.6 veces menor costo de uso de inferencia, el doble de velocidad en la mediana y tres llamadas estructuradas frente a más de treinta pasos de interfaz.
-
-Mantener la aclaración de la slide: es un benchmark interno pequeño en sandbox y los resultados varían según tienda, catálogo y asistente. El agente prepara la compra e inicia checkout. El comprador revisa y aprueba el pago dentro de PayPal.
+La [publicación de PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/) respalda las tres métricas de la slide. El ensayo compra una tarjeta de regalo en un sandbox pequeño. Los resultados varían según tienda, catálogo y asistente. El comprador conserva la revisión y aprobación del pago.
 
 ## Preparación antes de presentar
 
-Abrir las pestañas antes de subir al escenario:
+Dejar abiertas estas pestañas:
 
-- Presentación web: `http://127.0.0.1:3002/`.
-- Taller central: `http://127.0.0.1:3001/agenda/taller/index.html?paso=0`.
-- App final de respaldo: `http://127.0.0.1:3001/agenda/index.html`.
-- [Demo visual de Sarah](https://webmcp-demo-sdras.netlify.app/), si se mostrará en vivo.
+- Presentación: `http://127.0.0.1:3002/`.
+- TacoAgent: `http://127.0.0.1:3001/`.
+- [Comparación visual de Sarah](https://webmcp-demo-sdras.netlify.app/), si se mostrará en vivo.
 
-Comprobar primero:
+Comprobar primero en la pestaña del demo:
 
 ```js
 Boolean(document.modelContext)
 ```
 
-Si existe soporte, continuar. Sólo si falta, seguir la [guía oficial de desarrollo local](https://developer.chrome.com/docs/ai/webmcp), habilitar `chrome://flags/#enable-webmcp-testing` cuando corresponda y reiniciar. No instalar dependencias ni intentar resolver configuración en el escenario. La API nativa ya se había comprobado en Chrome 156 en la sesión previa del proyecto de referencia. Eso no constituye una prueba nueva de estas slides ni una garantía para todos los navegadores.
+Si hay soporte, continuar. Sólo si falta, seguir la [guía oficial de desarrollo local](https://developer.chrome.com/docs/ai/webmcp), habilitar `chrome://flags/#enable-webmcp-testing` cuando corresponda y reiniciar. Hacer la configuración antes de presentar.
 
-Para inspeccionar, abrir Chrome DevTools y entrar a **Application > WebMCP**. La extensión Inspector es opcional. El inspector integrado del demo también permite elegir herramientas y llamar con JSON. Comprobar en la pantalla qué modo está activo.
+Abrir **Chrome DevTools > Application > WebMCP** para inspeccionar herramientas y probar llamadas. La extensión Inspector es opcional. Confirmar que el indicador de TacoAgent informa que los registros nativos se completaron. El listado de la UI describe las capacidades del flujo, mientras el contador nativo informa de registros imperativos completados.
 
-El modo nativo utiliza `document.modelContext`. El simulador realiza llamadas JavaScript directas. Si hay que cambiar de modo, decirlo: «Voy a ensayar el contrato con llamadas JavaScript directas. Esta parte no es WebMCP nativo.» Una llamada manual, incluso nativa, no demuestra que un LLM haya elegido la herramienta.
+El panel **Ensayo guiado** es un respaldo local: sus botones llaman las mismas funciones de negocio, sin IA y sin fingir una conexión WebMCP. Si se usa, decirlo. Una invocación manual nativa tampoco demuestra que un LLM haya elegido la herramienta.
 
-## Taller central de 10–12 minutos
+## Demo de TacoAgent: diez minutos
 
-Los checkpoints son independientes. Cambiar de checkpoint recarga y reinicia la agenda. En cada uno hay que preparar de nuevo los datos que necesita la explicación.
+### 0:00–1:00 · Mostrar la UI y el estado
 
-| Paso | Qué cambia | Herramientas sin selección / con selección |
+Pulsar «Reiniciar». Enseñar el catálogo de restaurantes, el carrito vacío y el indicador de soporte. Explicar que búsqueda, menú y carrito también funcionan con los controles humanos.
+
+En el catálogo de la UI hay inicialmente una herramienta declarativa, `searchRestaurants`, y dos imperativas, `getRestaurantInfo` y `viewCart`. El registro imperativo tiene dos herramientas en este estado.
+
+### 1:00–2:00 · Búsqueda declarativa
+
+Usar `searchRestaurants` con cocina mexicana y precio sin filtro. En el Inspector, tomar los nombres de campos del formulario:
+
+```json
+{ "cuisine": "mexicana", "priceRange": "all" }
+```
+
+Mostrar que la búsqueda devuelve restaurantes y sus IDs. Señalar `toolname`, `tooldescription` y `toolautosubmit` en el formulario. Este envío automático corresponde a una búsqueda que no crea pedidos.
+
+### 2:00–3:00 · Abrir un menú
+
+Ejecutar `getRestaurantInfo`:
+
+```json
+{ "restaurantId": "taco-loco" }
+```
+
+El menú de Taco Loco aparece en la UI y devuelve productos, precios e IDs. La herramienta `addToCart` pasa a estar disponible. Este callback cambia la selección, por lo que no se describe como una lectura pura.
+
+### 3:00–4:30 · Agregar productos
+
+Ejecutar `addToCart`:
+
+```json
+{
+  "restaurantId": "taco-loco",
+  "menuItemId": "taco-carnitas",
+  "quantity": 2
+}
+```
+
+En los datos ficticios, «Tacos de Carnitas» es una orden de tres tacos. Quantity 2 agrega dos órdenes. El total es **MXN 25.98**. Mostrar el carrito y la respuesta de la operación.
+
+Cada llamada a `addToCart` agrega una línea de productos. Consultar el carrito antes de repetir una llamada si no se sabe si ya se ejecutó.
+
+### 4:30–5:30 · Un error que permite corregir
+
+Intentar un producto agotado:
+
+```json
+{
+  "restaurantId": "taco-loco",
+  "menuItemId": "quesadilla",
+  "quantity": 1
+}
+```
+
+La respuesta informa que no está disponible y el carrito válido permanece. Como alternativa, probar `quantity: 0` para mostrar que el contrato y la función rechazan una cantidad inválida. La app exige un entero entre 1 y 10.
+
+### 5:30–6:30 · Comparar respuesta y estado
+
+Ejecutar `viewCart` con `{}`. La respuesta contiene `success`, `message`, `items`, `itemCount`, `total` y `currency`. Comparar productos y total con la UI.
+
+Frase útil: «La herramienta y la persona leen el mismo estado. El esquema explica los argumentos y la función aplica las reglas.»
+
+### 6:30–8:00 · Disponibilidad dinámica
+
+Con productos aparecen `clearCart` y `checkout`. Vaciar con `clearCart` y observar que esas operaciones desaparecen. El menú queda abierto, así que `addToCart` sigue disponible. Agregar otra vez las dos órdenes para continuar.
+
+| Estado | Herramientas imperativas | Total con la búsqueda declarativa |
 | --- | --- | --- |
-| 0 | App normal que ya funciona con botones. | 0 / 0 |
-| 1 | Primera herramienta de lectura. | 1 / 1 |
-| 2 | Mutación y esquema, con una respuesta demasiado vaga. | 2 / 2 |
-| 3 | Resultados que permiten corregir el siguiente paso. | 2 / 2 |
-| 4 | Selección y edición contextual. | 3 / 4 |
-| 5 | Preparación de revisión y confirmación humana. | 4 / 5 |
+| Inicio | 2 | 3 |
+| Menú abierto | 3 | 4 |
+| Carrito con productos | 5 | 6 |
+| Carrito vacío, menú abierto | 3 | 4 |
 
-Los números cuentan herramientas disponibles. En el checkpoint 5 y en la app final, seleccionar y limpiar produce la secuencia **4, 5, 4 herramientas**.
+Mostrar `ToolRegistry` en `lib/webmcp.ts`: conserva registros que siguen siendo válidos y retira los demás con `AbortController`. Retirar un registro no cancela por sí mismo una ejecución activa.
 
-### Paso 0: la app ya funciona
+### 8:00–10:00 · Revisión y confirmación humana
 
-Abrir `?paso=0`. Añadir WebMCP con el botón humano. La sesión aparece y no hay tools publicadas. Decir: «Voy a publicar algunas funciones que ya existen. Sus reglas y su estado visible permanecen en la app.» Cero herramientas es el estado correcto de este paso.
+Ejecutar `checkout` con `{}`. Devuelve `success: true` y `status: "pending-human-review"`. Se abre un diálogo con productos y total.
 
-### Paso 1: lectura
+La persona compara el carrito y pulsa **Confirmar pedido ficticio**. `confirmOrder` sólo pertenece a ese botón y no está registrado como herramienta. La app muestra un ID de pedido local y vacía el carrito. No hay cobro, envío ni almacenamiento de datos personales.
 
-Abrir `?paso=1` y mostrar el código del checkpoint. Señalar nombre, descripción, esquema y `execute`. Seleccionar `listar_sesiones` y ejecutar:
+Decir: «La herramienta preparó la revisión. La persona confirmó un efecto concreto después de verlo.»
 
-```json
-{}
-```
+## Respaldo local sin IA
 
-Esperar `STATE` y comparar catálogo y agenda con la UI. Mostrar dónde el adaptador registra con `document.modelContext.registerTool`, descubre con `getTools` y ejecuta mediante `executeTool`. Un array de objetos JavaScript no publica herramientas por sí solo.
+Si la API nativa no está disponible en esa sesión, usar los botones de **Ensayo guiado**: buscar cocina mexicana, abrir Taco Loco, probar el producto agotado, agregar dos órdenes y solicitar revisión. Decir: «Estos botones llaman JavaScript local. Muestro el flujo de negocio y su relación con las herramientas, sin una llamada WebMCP nativa.»
 
-### Paso 2: mutación y una respuesta insuficiente
-
-Abrir `?paso=2`. Mostrar `sessionId` requerido y los valores del catálogo. Agregar:
-
-```json
-{ "sessionId": "webmcp" }
-```
-
-Repetir la llamada y luego intentar `tipos`. La regla de negocio conserva el estado y evita el conflicto, pero este checkpoint responde deliberadamente «Listo.». Preguntar: «¿Podría un agente decidir el siguiente paso con esta respuesta?» El problema didáctico es la información de salida, no una desactivación de las reglas.
-
-### Paso 3: resultados útiles
-
-Abrir `?paso=3`. Mostrar que ahora se devuelve el resultado de `agenda.add(input)` como JSON. Ejecutar la secuencia:
-
-| Entrada a `agregar_sesion` | Resultado esperado | Estado visible |
-| --- | --- | --- |
-| `{"sessionId":"webmcp"}` | `ADDED` | Una sesión de 10:00 a 10:30. |
-| La misma entrada | `ALREADY_ADDED` | Sigue habiendo una sesión. |
-| `{"sessionId":"tipos"}` | `TIME_CONFLICT` | El borrador se conserva. |
-| `{"sessionId":"accesibilidad"}` | `ADDED` | Dos sesiones contiguas. |
-
-`tipos` ocupa 10:15–10:45 y se cruza con WebMCP. `accesibilidad` ocupa 10:30–11:00 y sí cabe. Decir: «Un reintento no duplica y un error permite corregir el plan. El esquema no conoce los horarios seleccionados: la app valida ese contexto.»
-
-### Paso 4: contexto
-
-Abrir `?paso=4` y agregar `webmcp`. Ejecutar `seleccionar_sesion`:
-
-```json
-{ "sessionId": "webmcp" }
-```
-
-Observar que aparece `editar_sesion_seleccionada`. Ejecutarla:
-
-```json
-{ "title": "WebMCP en JSConfMX" }
-```
-
-Limpiar con `seleccionar_sesion` y `{"sessionId":null}`. La herramienta contextual se retira. En este checkpoint hay tres tools base y cuatro con selección. El registro usa `AbortSignal`; retirar el registro no equivale a cancelar automáticamente una llamada ya activa.
-
-### Paso 5: revisión humana
-
-Abrir `?paso=5`. Preparar una agenda y, si se quiere mostrar el recuento final, seleccionar y limpiar para observar cuatro, cinco y cuatro tools. Ejecutar `preparar_confirmacion` con `{}`. Esperar `CONFIRMATION_REQUIRED` y enseñar el resumen.
-
-La persona revisa los títulos y horarios y pulsa «Confirmar agenda». El botón humano aplica la confirmación. La herramienta sólo prepara la revisión. La agenda es local y ficticia: no reserva lugares, no cobra ni envía correos. Cualquier cambio en el borrador obliga a revisar de nuevo.
-
-## Respaldo compacto con la app final
-
-Si falta tiempo para construir por checkpoints, usar `/agenda/index.html` para un recorrido estimado de **5–7 minutos**: lectura, alta, reintento, conflicto, selección, edición y revisión. Nombrarlo como un recorrido de la app final, no como el taller completo de 10–12 minutos.
-
-Si el código escrito en vivo falla, abrir el checkpoint numerado conocido y continuar con su solución. No alterar reglas de horarios para salvar el recorrido. Un error claro y recuperable también forma parte de la explicación.
+No cambiar la regla de stock o cantidades para salvar el recorrido. Un error claro forma parte de lo que queremos mostrar.
 
 ## Cierre y preguntas
 
-«El primer paso puede ser una capacidad de lectura o un borrador que ya exista en tu aplicación. Declara el propósito, valida el contrato, comprueba el resultado en la UI y después evalúa las decisiones con un agente compatible.»
+«Una primera capacidad puede ser una lectura como viewCart. Declara su propósito, comprueba el resultado en la UI, prueba errores y después evalúa las decisiones con un agente compatible.»
 
 **¿Es un estándar W3C?** Es una propuesta abierta. La publicación del 27 de octubre es un Draft Community Group Report, no un estándar W3C ni un documento de Standards Track.
 
-**¿Reemplaza MCP?** Son contextos distintos y pueden convivir: servidores locales o remotos, y capacidades de la página abierta.
+**¿Reemplaza MCP?** Son contextos distintos que pueden convivir: servicios locales o remotos y capacidades de la página activa.
 
 **¿Las annotations dan permisos?** Comunican intención. La aplicación y su backend aplican validación y autorización.
 
@@ -178,14 +186,13 @@ Si el código escrito en vivo falla, abrir el checkpoint numerado conocido y con
 
 - [Demo de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/).
 - [Resultados y enfoque de PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/).
-- [Introducción de Chrome](https://developer.chrome.com/docs/ai/webmcp).
-- [Comparación con MCP](https://developer.chrome.com/docs/ai/webmcp/compare-mcp).
+- [Introducción de Chrome](https://developer.chrome.com/docs/ai/webmcp) y [comparación con MCP](https://developer.chrome.com/docs/ai/webmcp/compare-mcp).
 - [API declarativa](https://developer.chrome.com/docs/ai/webmcp/declarative-api) y [API imperativa](https://developer.chrome.com/docs/ai/webmcp/imperative-api).
 - [Diseño](https://developer.chrome.com/docs/ai/webmcp/build-tools) y [seguridad](https://developer.chrome.com/docs/ai/webmcp/secure-tools).
 - [Borrador de especificación](https://webmachinelearning.github.io/webmcp/).
-- [Tipos oficiales](https://github.com/webmachinelearning/webmcp-types).
-- [Skill oficial](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
+- [Tipos oficiales](https://github.com/webmachinelearning/webmcp-types) y [Skill oficial](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
 - [DevTools WebMCP](https://developer.chrome.com/docs/devtools/application/webmcp).
 - [Propuesta de feedback fuera del flujo](https://bandarra.me/posts/webmcp-feedback-loop).
+- [Código de TacoAgent](https://github.com/aileenvl/webmcp-demo).
 
 Los enlaces X compartidos no fueron accesibles. No se atribuyen afirmaciones a esos posts. Los ejemplos de Aisle, Alza y Roque Nights proceden del texto aportado en la conversación.

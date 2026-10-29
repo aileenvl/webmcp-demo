@@ -1,87 +1,67 @@
-# WebMCP · Charla, agenda y taller
+# TacoAgent · WebMCP
 
-Material en español de **Aileen Villanueva** para una sesión de **30 minutos**, actualizado el **29 de octubre de 2026**.
+Material en español de **Aileen Villanueva** para una sesión de **30 minutos**, actualizado el **29 de octubre de 2026**. **TacoAgent, el demo de este repositorio, es el ejemplo principal de la charla.**
 
-La presentación actual contiene **22 slides** y recorre cinco partes: **por qué WebMCP**, **qué es**, **dónde usarlo**, **MCP frente a WebMCP**, y **estado de la propuesta y cómo empezar hoy**. El demo principal es la **agenda compartida** con un taller de seis checkpoints. TacoAgent permanece como otro ejemplo en la página principal.
+La presentación contiene **22 slides** y recorre cinco partes: **por qué nace WebMCP**, **qué es**, **para qué se usa**, **cómo difiere de MCP**, y **estado de la propuesta y cómo empezar hoy**. Plan de ensayo: **18 minutos de explicación, 10 de demo y 2 de cierre**.
 
-## Abrir la sesión
+TacoAgent es una tienda ficticia: busca restaurantes, abre un menú, agrega productos al carrito y solicita la revisión de un pedido. Una persona confirma desde la interfaz. No hay pagos, envíos ni pedidos reales. Los datos viven en memoria y se reinician al recargar.
 
-Requiere Node.js **20.19 o superior** y npm.
+## Ejecutar
+
+Requiere Node.js **20.9 o superior** y npm.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Con el servidor en el puerto 3000:
+Con el puerto 3000 por defecto:
 
 | Material | Enlace |
 | --- | --- |
-| Presentación actual · 22 slides | [localhost:3000/slides/index.html](http://localhost:3000/slides/index.html) |
-| Agenda completa · modo nativo | [localhost:3000/agenda/index.html](http://localhost:3000/agenda/index.html) |
-| Taller · checkpoint 0 | [localhost:3000/agenda/taller/index.html?paso=0](http://localhost:3000/agenda/taller/index.html?paso=0) |
-| Agenda · simulador local sin IA | [localhost:3000/agenda/index.html?modo=simulador](http://localhost:3000/agenda/index.html?modo=simulador) |
-| Taller · simulador local sin IA | [localhost:3000/agenda/taller/index.html?paso=0&modo=simulador](http://localhost:3000/agenda/taller/index.html?paso=0&modo=simulador) |
-| TacoAgent · otro ejemplo | [localhost:3000](http://localhost:3000) |
+| Demo TacoAgent | [localhost:3000](http://localhost:3000) |
+| Presentación · 22 slides | [localhost:3000/slides/index.html](http://localhost:3000/slides/index.html) |
 
-Si usas otro puerto, cambia sólo `3000` en esos enlaces. Las rutas estáticas terminan explícitamente en **`index.html`** para funcionar también en Next y en el despliegue. En las slides usa **←/→** para navegar, **G** para el índice, **N** para notas y fuentes y **F** para pantalla completa. Consulta el [guion de la presentación](docs/guion-presentacion.md).
+Si usas otro puerto, cambia sólo `3000` en esos enlaces. La presentación estática termina en `index.html`. Usa **←/→** para navegar, **G** para el índice, **N** para notas y fuentes y **F** para pantalla completa.
 
-## Demo principal: agenda compartida
+El [guion de la presentación](docs/guion-presentacion.md) desarrolla las cinco partes; el [guion de 10 minutos del demo](docs/guion-demo.md) contiene las llamadas, resultados y respaldo con el panel local. La [nota de adaptación](docs/actualizacion-2026-10-29.md) y la [cobertura de fuentes](docs/fuentes-y-cobertura.md) explican el material incorporado.
 
-La interfaz humana y las herramientas usan las mismas funciones y validaciones. La agenda contiene sesiones ficticias: no reserva lugares, envía datos ni persiste cambios fuera de la pestaña.
+## Herramientas de TacoAgent
 
-| Herramienta | Propósito |
-| --- | --- |
-| `listar_sesiones` | Consultar catálogo y agenda actuales |
-| `agregar_sesion` | Añadir una sesión sin duplicados ni traslapes |
-| `seleccionar_sesion` | Seleccionar una sesión de la agenda o quitar la selección |
-| `editar_sesion_seleccionada` | Editar el título local, sólo mientras exista una selección editable |
-| `preparar_confirmacion` | Abrir una revisión en la interfaz; la confirmación queda en el botón humano |
+| Herramienta | Tipo | Disponibilidad | Resultado |
+| --- | --- | --- | --- |
+| `searchRestaurants` | Formulario declarativo | Siempre | Filtra por cocina y precio; devuelve restaurantes y menús |
+| `getRestaurantInfo` | JavaScript | Siempre | Devuelve un menú y abre el restaurante en la UI |
+| `viewCart` | JavaScript | Siempre | Devuelve productos, cantidad y total actuales; permite consultar el carrito vacío |
+| `addToCart` | JavaScript | Hay un menú abierto | Valida restaurante, producto, stock y cantidad antes de agregar |
+| `clearCart` | JavaScript | Carrito no vacío | Vacía el carrito local e invalida la revisión pendiente |
+| `checkout` | JavaScript | Carrito no vacío | Abre la revisión y devuelve `pending-human-review`; no confirma |
 
-En la app final, observa **4 → 5 → 4 herramientas** al seleccionar y quitar la selección. Prueba un conflicto horario, revisa el resultado recuperable y confirma la agenda ficticia desde la interfaz. El inspector integrado permite llamadas manuales; no incorpora un LLM. El simulador se identifica expresamente y ejecuta JavaScript local, sin fingir una conexión WebMCP.
+Contando la herramienta HTML y las de JavaScript, el flujo es **3 → 4 → 6 → 4**: inicio, menú abierto, carrito con productos y carrito vacío tras confirmar o vaciar. El menú continúa abierto al vaciar el carrito. **Reiniciar** vuelve al estado inicial con tres herramientas.
 
-## Taller: construir la integración
+El registro usa `document.modelContext.registerTool(tool, { signal })` y se retira con `AbortController.abort()`. Las acciones vuelven a validar entradas y estado al ejecutarse. La búsqueda usa `<form toolname="searchRestaurants" tooldescription="…" toolautosubmit>`; el envío del agente recibe el resultado mediante `SubmitEvent.respondWith()`.
 
-El taller conserva la app humana y añade capacidades en seis etapas independientes:
+## Recorrido del demo
 
-| Checkpoint | Qué se construye |
-| --- | --- |
-| 0 | App humana funcionando, sin herramientas |
-| 1 | Lectura del estado actual |
-| 2 | Primera mutación; respuesta deliberadamente vaga para discutirla |
-| 3 | Resultados claros: alta, reintento y conflicto recuperable |
-| 4 | Herramienta de edición según la selección |
-| 5 | Preparación de revisión y confirmación en la interfaz |
+1. Muestra el carrito vacío, las herramientas iniciales y el indicador del navegador.
+2. Busca cocina mexicana mediante `searchRestaurants` y explica la API declarativa.
+3. Abre Taco Loco con `getRestaurantInfo`; aparece `addToCart`.
+4. Agrega dos órdenes de tacos; aparecen `clearCart` y `checkout`.
+5. Consulta `viewCart` y prueba un producto agotado o una cantidad inválida.
+6. Invoca `checkout`, revisa productos y total y confirma el pedido ficticio desde la interfaz.
+7. Observa el carrito vacío y la retirada de las herramientas que lo necesitan.
 
-Cambia `paso=0` por `paso=1` hasta `paso=5` en la URL del taller. Cambiar de checkpoint recarga y reinicia la agenda. El ejercicio editable está en [`agenda/taller/pasos/ejercicio.ts`](agenda/taller/pasos/ejercicio.ts); cada checkpoint muestra su código. Consulta la [guía completa del taller](agenda/docs/TALLER.md) y el [README del demo de agenda](agenda/README.md).
+El esquema limita `quantity` a un entero de 1 a 10. La función también verifica ese límite, el stock y que el producto pertenezca al restaurante abierto. Modificar el carrito invalida la revisión preparada. La confirmación final no se expone como herramienta.
 
-Para desarrollar, verificar o volver a publicar el subproyecto:
+## Modo nativo y ensayo local
 
-```sh
-cd agenda
-npm ci
-npm test
-npm run typecheck
-npm run publicar:next
-```
+Comprueba primero `Boolean(document.modelContext)` y el indicador del demo. Si falta soporte, sigue la [guía oficial de Chrome](https://developer.chrome.com/docs/ai/webmcp): en un navegador compatible, habilita `chrome://flags/#enable-webmcp-testing` cuando corresponda, pulsa **Relaunch** y vuelve a localhost o HTTPS. El soporte depende de la versión y la configuración del navegador.
 
-`publicar:next` construye Vite con base `/agenda/` y copia el resultado a `public/agenda/`. Ese resultado compilado queda incluido en el repositorio: ejecutar la app Next no exige instalar las dependencias del taller. Las **28 pruebas** originales de la agenda y el taller se conservan; cubren reglas de negocio, cancelación, registros y los seis checkpoints.
+Para llamadas nativas manuales, utiliza **Chrome DevTools → Application → WebMCP**, o el [WebMCP Model Context Tool Inspector oficial](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd). Las llamadas manuales no necesitan un modelo. El modo de lenguaje natural con Gemini de la extensión requiere una API key propia.
 
-## Probar WebMCP nativo
+El panel **«Ensayo guiado»**, marcado **«Local · sin IA»**, permite practicar el recorrido aunque falte WebMCP. Sus botones ejecutan las mismas funciones de negocio; no registran una API falsa, no interpretan lenguaje natural y no demuestran una decisión de un LLM.
 
-En un Chrome compatible, habilita `chrome://flags/#enable-webmcp-testing`, pulsa **Relaunch** y vuelve a localhost o HTTPS. La agenda detecta `document.modelContext` y requiere `registerTool`, `getTools` y `executeTool`; el indicador informa si está usando el navegador nativo o el simulador.
-
-El [WebMCP Model Context Tool Inspector oficial](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd) también permite descubrir e invocar herramientas. Las llamadas manuales no requieren un modelo; su modo de lenguaje natural con Gemini necesita una API key propia. El soporte depende de la versión y configuración del navegador: consulta la [guía oficial vigente](https://developer.chrome.com/docs/ai/webmcp).
-
-Los registros usan `document.modelContext.registerTool(tool, { signal })` y se retiran con `AbortController.abort()`. La API declarativa se explica en las slides y se puede ver en TacoAgent; la agenda implementa la API imperativa.
-
-## Otro ejemplo: TacoAgent
-
-En `/` se conserva la tienda ficticia TacoAgent: búsqueda declarativa, menú, carrito y revisión de pedidos. No hay cobros ni envíos reales. Sus herramientas son `searchRestaurants`, `getRestaurantInfo`, `addToCart`, `viewCart`, `clearCart` y `checkout`. El [guion del demo](docs/guion-demo.md#variante-opcional-tacoagent) incluye esta variante opcional.
-
-## Verificación y fuentes
-
-Para la app Next y TacoAgent:
+## Verificación
 
 ```sh
 npm test
@@ -90,12 +70,14 @@ npm run lint
 npm run build
 ```
 
-La [nota de dependencias](docs/dependencias-2026-10-29.md) documenta las actualizaciones y alertas restantes. Las pruebas con adaptadores no sustituyen la verificación nativa en un navegador compatible.
+Las pruebas cubren precondiciones, cantidades, stock, IDs, estado actual, revisión y ciclo de registro con un adaptador de prueba. La integración nativa se comprueba además en un navegador compatible. La [nota de dependencias](docs/dependencias-2026-10-29.md) documenta las actualizaciones y alertas restantes.
 
-- [Especificación WebMCP](https://webmachinelearning.github.io/webmcp/): borrador de Community Group, no estándar W3C publicado.
-- [API imperativa](https://developer.chrome.com/docs/ai/webmcp/imperative-api) y [API declarativa](https://developer.chrome.com/docs/ai/webmcp/declarative-api).
-- [Buenas prácticas](https://developer.chrome.com/docs/ai/webmcp/best-practices) y [seguridad](https://developer.chrome.com/docs/ai/webmcp/secure-tools).
-- [Tipos TypeScript upstream](https://github.com/webmachinelearning/webmcp-types) y [skill de GoogleChromeLabs](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
-- [Closing the WebMCP Feedback Loop, André Cipriani Bandarra](https://bandarra.me/posts/webmcp-feedback-loop): propuestas de observabilidad, no una API de reporting ya desplegada.
+## Fuentes
+
+- [Especificación WebMCP](https://webmachinelearning.github.io/webmcp/): Draft Community Group Report; no es un W3C Standard publicado.
+- [Introducción de Chrome](https://developer.chrome.com/docs/ai/webmcp), [comparación con MCP](https://developer.chrome.com/docs/ai/webmcp/compare-mcp), [API imperativa](https://developer.chrome.com/docs/ai/webmcp/imperative-api) y [declarativa](https://developer.chrome.com/docs/ai/webmcp/declarative-api).
+- [Demo explicativa de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/) y [sandbox de PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/).
+- [Seguridad](https://developer.chrome.com/docs/ai/webmcp/secure-tools), [DevTools](https://developer.chrome.com/docs/devtools/application/webmcp), [tipos upstream](https://github.com/webmachinelearning/webmcp-types) y [Skill de GoogleChromeLabs](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
+- [Closing the WebMCP Feedback Loop, André Cipriani Bandarra](https://bandarra.me/posts/webmcp-feedback-loop): propuesta de observabilidad fuera del flujo, con límites identificados en la charla.
 
 [Repositorio del demo](https://github.com/aileenvl/webmcp-demo) · [Repositorio de la presentación](https://github.com/aileenvl/webmcp-presentation) · [Despliegue existente](https://webmcp-demo-ten.vercel.app). Una rama o PR no actualiza producción por sí sola; la versión pública depende del despliegue de Vercel.

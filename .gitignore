@@ -41,9 +41,3 @@ yarn-error.log*
 next-env.d.ts
 
 /.test-build/
-
-# Standalone agenda workshop (published output is tracked in public/agenda)
-/agenda/node_modules/
-/agenda/dist/
-/agenda/.test-build/
-/agenda/.npm-cache/

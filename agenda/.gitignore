@@ -1,6 +1,0 @@
-node_modules/
-dist/
-.test-build/
-.npm-cache/
-artifacts/
-.DS_Store

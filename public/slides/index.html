@@ -63,7 +63,7 @@
     let current = hashSlide();
     function node(tag, text, className) { const el = document.createElement(tag); if (text != null) el.textContent = text; if (className) el.className = className; return el; }
     function list(lines) { const ul = node('ul', null, 'points'); lines.forEach(line => ul.append(node('li', line.replace(/^•\s*/, '')))); return ul; }
-    function demoLink(raw) { const url = new URL(raw, location.href); if (!['https:', 'http:'].includes(url.protocol)) return null; if (['localhost', '127.0.0.1'].includes(url.hostname) && url.pathname.startsWith('/agenda/')) return location.origin + url.pathname + url.search + url.hash; return url.href; }
+    function demoLink(raw) { const url = new URL(raw, location.href); if (!['https:', 'http:'].includes(url.protocol)) return null; if (['localhost', '127.0.0.1'].includes(url.hostname)) return location.origin + url.pathname + url.search + url.hash; return url.href; }
     function render() {
       const data = slides[current], slide = $('slide');
       slide.replaceChildren(node('h1', data.title)); slide.className = data.type; slide.setAttribute('aria-label', `Diapositiva ${current + 1}: ${data.title}`);
@@ -76,7 +76,7 @@
         const grid = node('div', null, 'stats-grid'); (data.stats || []).forEach(stat => { const card = node('section', null, 'stat'); card.append(node('h2', stat.label), node('p', stat.description || '')); grid.append(card); }); slide.append(grid);
       } else { slide.append(list(data.content || [])); }
       if (data.caption) slide.append(node('p', data.caption, 'caption'));
-      if (data.demoUrl) { const href = demoLink(data.demoUrl); if (href) { const link = node('a', 'Abrir taller de agenda →', 'demo-link'); link.href = href; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); } }
+      if (data.demoUrl) { const href = demoLink(data.demoUrl); if (href) { const link = node('a', 'Abrir TacoAgent →', 'demo-link'); link.href = href; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); } }
       $('count').textContent = `${current + 1} / ${slides.length}`; $('prev').disabled = current === 0; $('next').disabled = current === slides.length - 1;
       $('progress').firstElementChild.style.width = `${(current + 1) / slides.length * 100}%`;
       $('notes-body').textContent = data.notes || ''; $('sources').replaceChildren();

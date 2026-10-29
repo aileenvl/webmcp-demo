@@ -1,6 +1,6 @@
 # Adaptación de la charla · 29 de octubre de 2026
 
-La sesión actual dura **30 minutos**, contiene **22 slides** y utiliza la **agenda compartida con su taller de seis checkpoints** como demo principal. Se integra el demo de agenda ya desarrollado; se conservan su lógica, validaciones, registro contextual, soluciones y ejercicios. TacoAgent queda disponible como ejemplo adicional de comercio y API declarativa.
+La sesión actual dura **30 minutos**, contiene **22 slides** y utiliza **TacoAgent, el demo del repositorio**, como ejemplo principal. El plan de ensayo es **18 minutos de explicación, 10 de demo y 2 de cierre**. Los conceptos se conectan con búsqueda, menú, carrito, errores y revisión de un pedido ficticio.
 
 ## Hilo de las 22 slides
 
@@ -12,42 +12,35 @@ La sesión actual dura **30 minutos**, contiene **22 slides** y utiliza la **age
 | Cómo difiere de MCP | 11–12 | Servidores locales o remotos y capacidades de la página abierta; convivencia |
 | Estado de la propuesta y empezar hoy | 13–20 | Soporte, contratos, registro dinámico, Types, Skill, DevTools, seguridad y feedback |
 
-La slide 1 abre la charla; la 21 conduce el taller y la 22 propone un primer paso y abre preguntas. El [guion de la presentación](guion-presentacion.md) distribuye **17 minutos de explicación, 11 de taller y 2 de cierre**. Es una estimación para ensayar, no una presentación humana cronometrada.
+La slide 1 abre la charla, la 21 conduce el demo de TacoAgent y la 22 propone un primer paso y abre preguntas. El [guion de la presentación](guion-presentacion.md) desarrolla las cinco partes y el [guion del demo](guion-demo.md) contiene las llamadas exactas. Los tiempos son una estimación para ensayar.
 
-## Demo central y taller
+## Qué muestra TacoAgent
 
-La app final se sirve en **`/agenda/index.html`** y el taller empieza en **`/agenda/taller/index.html?paso=0`**. Los checkpoints son independientes; navegar entre ellos reinicia la agenda:
+La búsqueda se declara con un formulario HTML, `toolname`, `tooldescription` y `toolautosubmit`. Cuando el agente envía el formulario y JavaScript intercepta el envío, `SubmitEvent.respondWith()` devuelve el resultado.
 
-1. **0 · App humana:** botones y reglas de negocio, con cero herramientas.
-2. **1 · Lectura:** `listar_sesiones` devuelve el estado actual.
-3. **2 · Mutación:** `agregar_sesion` conserva las reglas, pero devuelve una respuesta deliberadamente vaga.
-4. **3 · Resultados:** distingue alta, reintento sin duplicados y conflicto recuperable.
-5. **4 · Contexto:** selección y edición disponible sólo en su contexto válido.
-6. **5 · Revisión:** `preparar_confirmacion` abre el resumen; la persona confirma en la interfaz.
+Las demás acciones usan funciones JavaScript compartidas con la interfaz. `getRestaurantInfo` abre un menú; entonces aparece `addToCart`. Con productos en el carrito aparecen `clearCart` y `checkout`. `viewCart` permite leer el estado actual incluso cuando está vacío.
 
-En el checkpoint 4 hay **3 → 4 → 3** herramientas al seleccionar y quitar la selección. En el checkpoint 5 y la app final hay **4 → 5 → 4**. La diferencia es la incorporación de `preparar_confirmacion` en el último paso.
+El recuento total, incluida la herramienta HTML, es **3 → 4 → 6 → 4**: inicio, menú abierto, productos agregados y carrito vacío después de confirmar o vaciar. El menú permanece abierto. «Reiniciar» vuelve a tres herramientas.
 
-Las funciones compartidas validan IDs, entradas, horarios y selección. Agregar de nuevo una sesión conserva una sola entrada; un traslape devuelve una explicación y una alternativa. Modificar el borrador invalida la revisión preparada. No hay reservas, pagos, correos ni persistencia fuera de la pestaña.
+La función valida restaurante, producto, stock y cantidad entera de 1 a 10. Los errores conservan el carrito y explican cómo corregir la llamada. `checkout` devuelve **`pending-human-review`** y abre una revisión; una persona confirma desde la interfaz. Modificar el carrito invalida la revisión pendiente. No hay pagos, envíos ni datos personales requeridos; el estado vive en memoria.
 
-El inspector integrado ofrece llamadas manuales mediante `document.modelContext`; no incorpora un LLM. El simulador, identificado expresamente, ejecuta funciones JavaScript sin reemplazar la API del navegador. La [guía del demo](guion-demo.md) contiene entradas y resultados para presentar; la [guía extensa del taller](../agenda/docs/TALLER.md) explica cada cambio de código.
+El panel «Ensayo guiado», marcado «Local · sin IA», ejecuta las mismas funciones de negocio para practicar. Las llamadas de ese panel son JavaScript directo. La invocación nativa se demuestra desde DevTools o un Inspector compatible, y se distingue de evaluar las decisiones de un LLM.
 
 ## Material reciente incorporado
 
 - **Sarah:** la reserva se explica con el mismo widget y objetivo por dos rutas. La comparación es didáctica, no un benchmark universal.
-- **Registro dinámico:** los ejemplos Aisle, Alza y Roque Nights del texto de André aportado por Aileen muestran cuándo una herramienta tiene sentido y cómo coordinar su retirada. La agenda vuelve concreto ese principio con `editar_sesion_seleccionada`.
-- **PayPal:** se conserva el alcance de su prueba interna pequeña en sandbox y la revisión del comprador. Las cifras del caso se presentan con sus límites en las slides y sus notas.
-- **Types, Skill y DevTools:** se incluyen recursos actuales para desarrollar e inspeccionar contratos. Los tipos no añaden soporte al navegador y los hints no sustituyen validación o autorización.
-- **Feedback:** el paso 2 permite observar una salida insuficiente y el paso 3 la corrige. El reporting fuera de banda del artículo de André se explica como propuesta; el resultado local del inspector es otra señal disponible en el demo.
+- **Registro dinámico:** los ejemplos Aisle, Alza y Roque Nights del texto de André aportado por Aileen muestran cuándo una herramienta tiene sentido y cómo coordinar su retirada. TacoAgent concreta ese principio con el menú abierto y el contenido del carrito.
+- **PayPal:** se conserva el alcance de su prueba interna pequeña en sandbox y la revisión del comprador. Las cifras se presentan con sus límites en las slides y sus notas.
+- **Types, Skill y DevTools:** se incluyen recursos actuales para desarrollar e inspeccionar contratos. Los tipos no añaden soporte al navegador; los hints no sustituyen validación o autorización.
+- **Feedback:** las respuestas estructuradas y errores del demo hacen visible qué ocurrió. El reporting fuera de banda del artículo de André se presenta como propuesta; el resultado local del inspector ofrece otra señal de depuración.
 
 La cobertura y atribución detalladas están en [Fuentes y cobertura](fuentes-y-cobertura.md) y en las notas de cada slide. Los enlaces de X y el enlace corto de LinkedIn no se recuperaron íntegramente: no se atribuye contenido supuesto a esos IDs. Los ejemplos de LinkedIn se apoyan en el texto aportado y en fuentes primarias.
 
 ## API y estado de la propuesta
 
-La implementación usa **`document.modelContext`**, registro asíncrono con `registerTool(tool, { signal })`, descubrimiento con `getTools()` e invocación con `executeTool(tool, argumentos)`. La señal de registro permite retirar herramientas mediante `abort()`; retirar un registro no equivale a cancelar automáticamente una ejecución ya activa. Las funciones vuelven a validar el estado al recibir una llamada.
+La implementación utiliza **`document.modelContext`**, registro asíncrono con `registerTool(tool, { signal })` y retirada con `AbortController.abort()`. El adaptador conserva los registros que siguen siendo útiles. Cada ejecución vuelve a validar entradas y estado. Retirar un registro no equivale a cancelar automáticamente una ejecución ya activa.
 
 El documento publicado el **27 de octubre de 2026** es un **Draft Community Group Report**: WebMCP es una propuesta abierta en evolución y no un W3C Standard publicado ni un documento de Standards Track. La charla explica cómo probarlo hoy en un navegador compatible con ese estado real.
-
-TacoAgent permanece en `/`, con su búsqueda declarativa y recorrido ficticio de carrito. Su `checkout` prepara una revisión y su confirmación ocurre por separado en la interfaz. Es una variante opcional de la demostración.
 
 ## Fuentes primarias
 
