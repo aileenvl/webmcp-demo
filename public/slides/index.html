@@ -13,15 +13,15 @@
     #progress{position:fixed;inset:0 0 auto;height:4px;background:#dadce0;z-index:3}#progress span{display:block;height:100%;background:#4285f4}
     .colors{display:flex;gap:9px;position:fixed;left:5vw;top:29px}.colors i{width:11px;height:11px;border-radius:50%;background:#4285f4}
     .colors i:nth-child(2){background:#ea4335}.colors i:nth-child(3){background:#fbbc04}.colors i:nth-child(4){background:#34a853}
-    #hint{position:fixed;right:4vw;top:23px;color:#4b5158;font-size:12px}main{min-height:100dvh;padding:82px 6vw 108px;display:flex;align-items:center}
-    #slide{width:min(1200px,100%);margin:auto}h1{font-size:clamp(32px,4.3vw,64px);line-height:1.13;letter-spacing:-1.5px;margin:0 0 42px;font-weight:600}
+    #hint{position:fixed;right:4vw;top:23px;color:#4b5158;font-size:12px}main{min-height:100dvh;padding:76px 6vw 90px;display:flex;align-items:center}
+    #slide{width:min(1200px,100%);margin:auto}.section-label{font-size:14px;line-height:1.4;letter-spacing:1.1px;text-transform:uppercase;color:#174ea6;font-weight:600;margin:0 0 18px}h1{font-size:clamp(32px,4.3vw,64px);line-height:1.13;letter-spacing:-1.5px;margin:0 0 32px;font-weight:600}
     .title h1{font-size:clamp(72px,12vw,176px);color:#174ea6;margin-bottom:28px;letter-spacing:-5px}.title p{font-size:clamp(24px,3.2vw,43px);line-height:1.45;white-space:pre-line;max-width:1000px}
     .points{list-style:none;padding:0;margin:0;display:grid;gap:23px}.points li{font-size:clamp(19px,2.35vw,33px);line-height:1.4;border-left:4px solid #4285f4;padding-left:24px}
     .points li:nth-child(2){border-color:#ea4335}.points li:nth-child(3){border-color:#fbbc04}.points li:nth-child(4){border-color:#34a853}
     .columns{display:grid;grid-template-columns:1fr 1fr;gap:5vw}.columns section{border-top:4px solid #4285f4;padding-top:22px}.columns section:nth-child(2){border-color:#34a853}
     .columns h2{font-size:clamp(24px,3vw,40px);margin:0 0 28px}.columns .points li{border:0;padding:0;font-size:clamp(18px,2vw,28px)}
-    pre{background:#f1f3f4;border:1px solid #c4c7c5;border-left:4px solid #4285f4;border-radius:6px;padding:26px 30px;overflow:auto;margin:0}
-    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(13px,1.75vw,25px);line-height:1.65;white-space:pre}
+    pre{background:#f1f3f4;border:1px solid #c4c7c5;border-left:4px solid #4285f4;border-radius:6px;padding:20px 24px;overflow:auto;margin:0}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(13px,1.6vw,23px);line-height:1.45;white-space:pre}
     .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.stat{padding:24px;background:#e8f0fe;border-top:4px solid #4285f4}.stat:nth-child(2n){background:#e6f4ea;border-color:#34a853}.stat h2{margin:0 0 14px;font-size:clamp(23px,2.6vw,36px);line-height:1.2}.stat p{margin:0;font-size:clamp(18px,1.8vw,25px);line-height:1.45;color:#3c4043}
     .caption{font-size:16px;color:#4b5158;margin-top:18px;line-height:1.5}.demo-link{display:inline-block;margin-top:30px;font-size:24px;padding:12px 0;text-underline-offset:6px}
     nav{position:fixed;bottom:22px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:4}#count{min-width:70px;text-align:center;font:15px ui-monospace,monospace}
@@ -66,7 +66,7 @@
     function demoLink(raw) { const url = new URL(raw, location.href); if (!['https:', 'http:'].includes(url.protocol)) return null; if (['localhost', '127.0.0.1'].includes(url.hostname)) return location.origin + url.pathname + url.search + url.hash; return url.href; }
     function render() {
       const data = slides[current], slide = $('slide');
-      slide.replaceChildren(node('h1', data.title)); slide.className = data.type; slide.setAttribute('aria-label', `Diapositiva ${current + 1}: ${data.title}`);
+      slide.replaceChildren(); if (data.section && data.type !== 'title') slide.append(node('p', data.section, 'section-label')); slide.append(node('h1', data.title)); slide.className = data.type; slide.setAttribute('aria-label', `Diapositiva ${current + 1}: ${data.title}`);
       if (data.type === 'title') slide.append(node('p', data.subtitle));
       else if (data.type === 'code') { const pre = node('pre'); pre.append(node('code', data.code)); slide.append(pre, node('p', data.codeLanguage, 'caption')); }
       else if (data.type === 'comparison') {
@@ -77,6 +77,7 @@
       } else { slide.append(list(data.content || [])); }
       if (data.caption) slide.append(node('p', data.caption, 'caption'));
       if (data.demoUrl) { const href = demoLink(data.demoUrl); if (href) { const link = node('a', 'Abrir TacoAgent →', 'demo-link'); link.href = href; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); } }
+      if (data.videoUrl) { const href = demoLink(data.videoUrl); if (href) { const link = node('a', 'Ver video de respaldo · sin conexión →', 'demo-link'); link.style.marginLeft = '28px'; link.href = href; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); } }
       $('count').textContent = `${current + 1} / ${slides.length}`; $('prev').disabled = current === 0; $('next').disabled = current === slides.length - 1;
       $('progress').firstElementChild.style.width = `${(current + 1) / slides.length * 100}%`;
       $('notes-body').textContent = data.notes || ''; $('sources').replaceChildren();
@@ -88,7 +89,7 @@
     function notes(open = $('notes').hidden) { $('notes').hidden = !open; $('toggle-notes').setAttribute('aria-expanded', String(open)); }
     function grid() {
       $('index-list').replaceChildren(); notes(false);
-      slides.forEach((slide, index) => { const button = node('button', `${index + 1}. ${slide.title}`); if (index === current) button.setAttribute('aria-current', 'step'); button.onclick = () => { $('index').close(); go(index); }; $('index-list').append(button); });
+      slides.forEach((slide, index) => { const button = node('button', `${index + 1}. ${slide.title}`); if (slide.section) button.title = slide.section; if (index === current) button.setAttribute('aria-current', 'step'); button.onclick = () => { $('index').close(); go(index); }; $('index-list').append(button); });
       $('index').showModal(); $('index-list').querySelector('[aria-current]').focus();
     }
     async function fullscreen() { try { $('error').textContent = ''; if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch { $('error').textContent = 'El navegador no permitió pantalla completa. Usa su menú de visualización.'; } }

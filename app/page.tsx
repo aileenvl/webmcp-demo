@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { restaurants, type Restaurant } from '@/lib/mock-data'
 import { DemoStore, type ToolInput, type ToolResult } from '@/lib/demo-state'
-import { getModelContext, ToolRegistry, type ToolDefinition } from '@/lib/webmcp'
+import { createToolCallback, getModelContext, ToolRegistry, type ToolDefinition } from '@/lib/webmcp'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart, Search, UtensilsCrossed, Code2, RotateCcw, Check, ShieldCheck } from 'lucide-react'
 
@@ -17,7 +17,7 @@ const descriptions: Record<string, string> = {
   checkout: 'Solicita revisión del carrito en la interfaz. Devuelve pending-human-review. No confirma, cobra ni envía pedidos.',
 }
 
-function makeTools(store: DemoStore, execute: (name: string, input: ToolInput) => ToolResult): ToolDefinition[] {
+function makeTools(store: DemoStore, execute: (name: string, input: unknown) => ToolResult): ToolDefinition[] {
   return store.toolNames().map(name => ({
     name, description: descriptions[name],
     inputSchema: name === 'getRestaurantInfo' ? {
@@ -30,7 +30,7 @@ function makeTools(store: DemoStore, execute: (name: string, input: ToolInput) =
       }, required: ['restaurantId', 'menuItemId', 'quantity'], additionalProperties: false,
     } : emptySchema,
     annotations: { readOnlyHint: name === 'viewCart', consequentialHint: false },
-    execute: async input => execute(name, input),
+    execute: createToolCallback(input => execute(name, input)),
   }))
 }
 
@@ -54,17 +54,19 @@ export default function Home() {
       return () => { mounted = false }
     }
     const registry = new ToolRegistry(context)
-    const execute = (name: string, input: ToolInput) => {
+    let syncRevision = 0
+    const execute = (name: string, input: unknown) => {
       const result = store.run(name, input)
       if (mounted) setLastResult(result)
       return result
     }
     const sync = () => {
+      const revision = ++syncRevision
       const tools = makeTools(store, execute)
       void registry.setTools(tools).then(() => {
-        if (mounted) { setNativeStatus('WebMCP nativo disponible'); setNativeTools(tools.map(tool => tool.name)) }
+        if (mounted && revision === syncRevision) { setNativeStatus('WebMCP nativo disponible'); setNativeTools(tools.map(tool => tool.name)) }
       }).catch((error: unknown) => {
-        if (mounted) setNativeStatus(`No se pudieron registrar herramientas: ${error instanceof Error ? error.message : 'error del navegador'}`)
+        if (mounted && revision === syncRevision) setNativeStatus(`No se pudieron registrar herramientas: ${error instanceof Error ? error.message : 'error del navegador'}`)
       })
     }
     sync()
@@ -94,7 +96,7 @@ export default function Home() {
     const data = new FormData(event.currentTarget)
     const result = search({ cuisine: data.get('cuisine'), priceRange: data.get('priceRange') })
     const nativeEvent = event.nativeEvent as SubmitEvent & { agentInvoked?: boolean; respondWith?: (value: Promise<ToolResult>) => void }
-    if (nativeEvent.agentInvoked && nativeEvent.respondWith) nativeEvent.respondWith(Promise.resolve(result))
+    if (nativeEvent.agentInvoked && typeof nativeEvent.respondWith === 'function') nativeEvent.respondWith(Promise.resolve(result))
   }
 
   return (
