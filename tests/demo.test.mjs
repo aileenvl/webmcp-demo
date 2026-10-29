@@ -3,6 +3,40 @@ import assert from 'node:assert/strict'
 import { DemoStore } from '../.test-build/demo-state.js'
 import { restaurants } from '../.test-build/mock-data.js'
 import { ToolRegistry } from '../.test-build/webmcp.js'
+import * as webmcp from '../.test-build/webmcp.js'
+
+test('untrusted non-object inputs are rejected without throwing or changing the cart', () => {
+  const store = new DemoStore(restaurants)
+  store.run('getRestaurantInfo', { restaurantId: 'taco-loco' })
+  store.run('addToCart', { restaurantId: 'taco-loco', menuItemId: 'taco-carnitas', quantity: 1 })
+  const before = store.getSnapshot()
+  for (const input of [null, undefined, [], true, 1, '{}']) {
+    assert.equal(store.search(input).success, false)
+    assert.equal(store.run('viewCart', input).success, false)
+    assert.equal(store.run('checkout', input).success, false)
+    assert.equal(store.run('addToCart', input).success, false)
+  }
+  assert.equal(store.getSnapshot(), before)
+})
+
+test('runtime validation enforces additionalProperties for read and write tools', () => {
+  const store = new DemoStore(restaurants)
+  store.run('getRestaurantInfo', { restaurantId: 'taco-loco' })
+  store.run('addToCart', { restaurantId: 'taco-loco', menuItemId: 'taco-carnitas', quantity: 1 })
+  const before = store.getSnapshot()
+  assert.equal(store.search({ cuisine: 'mexicana', unexpected: true }).success, false)
+  assert.equal(store.run('viewCart', { unexpected: true }).success, false)
+  assert.equal(store.run('clearCart', { force: true }).success, false)
+  assert.equal(store.run('checkout', { confirm: true }).success, false)
+  assert.equal(store.getSnapshot(), before)
+})
+
+test('search normalizes accepted cuisine names and rejects non-string prices', () => {
+  const store = new DemoStore(restaurants)
+  assert.equal(store.search({ cuisine: 'ALL', priceRange: 'all' }).restaurants.length, 3)
+  assert.equal(store.search({ cuisine: 'MEXICANA', priceRange: '$' }).restaurants[0].id, 'taco-loco')
+  assert.equal(store.search({ priceRange: ['$'] }).success, false)
+})
 
 test('only exposes actions that make sense in the current state', () => {
   const store = new DemoStore(restaurants)
@@ -82,4 +116,56 @@ test('tool registration is idempotent and aborts removed registrations', async (
   await registry.setTools([])
   assert.equal(registered.size, 0)
   registry.dispose()
+})
+
+test('withdrawing tools aborts pending registrations and skips obsolete queued tools', async () => {
+  const registered = new Set()
+  const calls = []
+  let release
+  const pending = new Promise(resolve => { release = resolve })
+  const registry = new ToolRegistry({ registerTool: async (tool, { signal }) => {
+    calls.push(tool.name)
+    registered.add(tool.name)
+    signal.addEventListener('abort', () => registered.delete(tool.name), { once: true })
+    await pending
+  } })
+  const definition = name => ({ name, description: name, inputSchema: { type: 'object', properties: {} }, execute: async () => ({}) })
+  const first = registry.setTools([definition('viewCart'), definition('checkout')])
+  await Promise.resolve()
+  const second = registry.setTools([])
+  const withdrewImmediately = registered.size === 0
+  release()
+  await Promise.all([first, second])
+  assert.equal(withdrewImmediately, true)
+  assert.deepEqual(calls, ['viewCart'])
+  assert.equal(registered.size, 0)
+  registry.dispose()
+})
+
+test('an aborted execution signal prevents a native callback from mutating the cart', async () => {
+  const store = new DemoStore(restaurants)
+  store.run('getRestaurantInfo', { restaurantId: 'taco-loco' })
+  const callback = webmcp.createToolCallback(input => store.run('addToCart', input))
+  const controller = new AbortController()
+  controller.abort()
+  await assert.rejects(callback({ restaurantId: 'taco-loco', menuItemId: 'taco-carnitas', quantity: 2 }, { signal: controller.signal }), { name: 'AbortError' })
+  assert.equal(store.getSnapshot().cart.length, 0)
+})
+
+test('cancelling one invocation does not withdraw the tool registration', async () => {
+  const registered = new Map()
+  const registry = new ToolRegistry({ registerTool: async (tool, { signal }) => {
+    registered.set(tool.name, tool)
+    signal.addEventListener('abort', () => registered.delete(tool.name), { once: true })
+  } })
+  const store = new DemoStore(restaurants)
+  const tool = { name: 'viewCart', description: 'Current cart', inputSchema: { type: 'object', properties: {} }, execute: webmcp.createToolCallback(input => store.run('viewCart', input)) }
+  await registry.setTools([tool])
+  const invocation = new AbortController()
+  invocation.abort()
+  await assert.rejects(tool.execute({}, { signal: invocation.signal }), { name: 'AbortError' })
+  assert.equal(registered.has('viewCart'), true)
+  assert.equal((await tool.execute({}, { signal: new AbortController().signal })).itemCount, 0)
+  registry.dispose()
+  assert.equal(registered.size, 0)
 })

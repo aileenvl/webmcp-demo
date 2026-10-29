@@ -2,6 +2,20 @@ import type { Restaurant, CartItem } from './mock-data'
 
 export type ToolInput = Record<string, unknown>
 export type ToolResult = { success: boolean; message: string; [key: string]: unknown }
+
+const inputFields: Record<string, readonly string[]> = {
+  getRestaurantInfo: ['restaurantId'],
+  viewCart: [],
+  addToCart: ['restaurantId', 'menuItemId', 'quantity'],
+  clearCart: [],
+  checkout: [],
+}
+
+function hasOnlyFields(input: unknown, allowed: readonly string[]): input is ToolInput {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return false
+  const prototype = Object.getPrototypeOf(input)
+  return (prototype === Object.prototype || prototype === null) && Object.keys(input).every(key => allowed.includes(key))
+}
 export interface DemoSnapshot {
   selectedRestaurantId: string | null
   cart: CartItem[]
@@ -35,21 +49,24 @@ export class DemoStore {
     ]
   }
 
-  search(params: ToolInput): ToolResult {
-    const cuisine = params.cuisine ?? 'all'
-    const priceRange = params.priceRange ?? 'all'
-    if (typeof cuisine !== 'string' || !['all', 'mexicana', 'italiana', 'japonesa'].includes(cuisine.toLowerCase())) {
+  search(params: unknown): ToolResult {
+    if (!hasOnlyFields(params, ['cuisine', 'priceRange'])) return { success: false, message: 'Envía un objeto JSON con cuisine y priceRange, sin campos adicionales.' }
+    const cuisineInput = params.cuisine === undefined ? 'all' : params.cuisine
+    const priceRange = params.priceRange === undefined ? 'all' : params.priceRange
+    if (typeof cuisineInput !== 'string' || !['all', 'mexicana', 'italiana', 'japonesa'].includes(cuisineInput.toLowerCase())) {
       return { success: false, message: 'Cocina inválida. Usa all, mexicana, italiana o japonesa.' }
     }
-    if (!['all', '$', '$$', '$$$'].includes(String(priceRange))) {
+    if (typeof priceRange !== 'string' || !['all', '$', '$$', '$$$'].includes(priceRange)) {
       return { success: false, message: 'Precio inválido. Usa all, $, $$ o $$$.' }
     }
-    const matches = this.catalog.filter(r => (cuisine === 'all' || r.cuisine.toLowerCase() === cuisine.toLowerCase()) && (priceRange === 'all' || r.priceRange === priceRange))
+    const cuisine = cuisineInput.toLowerCase()
+    const matches = this.catalog.filter(r => (cuisine === 'all' || r.cuisine.toLowerCase() === cuisine) && (priceRange === 'all' || r.priceRange === priceRange))
     return { success: true, message: `${matches.length} restaurantes encontrados.`, restaurants: matches }
   }
 
-  run(name: string, params: ToolInput): ToolResult {
+  run(name: string, params: unknown): ToolResult {
     if (!this.toolNames().includes(name)) return { success: false, message: `${name} no está disponible en el estado actual. Abre un menú o agrega productos primero.` }
+    if (!hasOnlyFields(params, inputFields[name])) return { success: false, message: `Entrada inválida para ${name}. Usa un objeto JSON sin campos adicionales.` }
     if (name === 'getRestaurantInfo') {
       const restaurant = this.catalog.find(r => r.id === params.restaurantId)
       if (!restaurant) return { success: false, message: `Restaurante desconocido. IDs válidos: ${this.catalog.map(r => r.id).join(', ')}.` }
