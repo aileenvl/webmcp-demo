@@ -22,6 +22,7 @@
     .columns h2{font-size:clamp(24px,3vw,40px);margin:0 0 28px}.columns .points li{border:0;padding:0;font-size:clamp(18px,2vw,28px)}
     pre{background:#f1f3f4;border:1px solid #c4c7c5;border-left:4px solid #4285f4;border-radius:6px;padding:26px 30px;overflow:auto;margin:0}
     code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(13px,1.75vw,25px);line-height:1.65;white-space:pre}
+    .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.stat{padding:24px;background:#e8f0fe;border-top:4px solid #4285f4}.stat:nth-child(2n){background:#e6f4ea;border-color:#34a853}.stat h2{margin:0 0 14px;font-size:clamp(23px,2.6vw,36px);line-height:1.2}.stat p{margin:0;font-size:clamp(18px,1.8vw,25px);line-height:1.45;color:#3c4043}
     .caption{font-size:16px;color:#4b5158;margin-top:18px;line-height:1.5}.demo-link{display:inline-block;margin-top:30px;font-size:24px;padding:12px 0;text-underline-offset:6px}
     nav{position:fixed;bottom:22px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:4}#count{min-width:70px;text-align:center;font:15px ui-monospace,monospace}
     #notes{position:fixed;top:65px;right:24px;bottom:85px;width:min(490px,calc(100% - 48px));overflow:auto;background:#fff;border:1px solid #b6b9bd;border-radius:8px;padding:24px;z-index:5;box-shadow:0 12px 70px #0002}
@@ -30,7 +31,7 @@
     dialog{background:#fafaf7;color:#202124;border:1px solid #b6b9bd;border-radius:8px;width:min(1000px,94vw);max-height:88dvh;padding:28px}dialog::backdrop{background:#000b}
     #index-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:24px}#index-list button{text-align:left;min-height:85px;line-height:1.4}#index-list [aria-current]{border-color:#4285f4;background:#e8f0fe}
     #error{position:fixed;bottom:78px;left:20px;right:20px;text-align:center;color:#8a3e00;font-size:13px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-    @media(max-width:650px){#hint{display:none}main{padding:76px 6vw 105px}h1{margin-bottom:28px}.columns{grid-template-columns:1fr;gap:28px}.columns h2{margin-bottom:14px}.points{gap:18px}.points li{padding-left:16px}pre{padding:18px 12px}nav{gap:6px}nav button{padding:10px}#index-list{grid-template-columns:1fr 1fr}.title h1{letter-spacing:-3px}}
+    @media(max-width:650px){#hint{display:none}main{padding:76px 6vw 105px}h1{margin-bottom:28px}.columns{grid-template-columns:1fr;gap:28px}.stats-grid{grid-template-columns:1fr;gap:16px}.columns h2{margin-bottom:14px}.points{gap:18px}.points li{padding-left:16px}pre{padding:18px 12px}nav{gap:6px}nav button{padding:10px}#index-list{grid-template-columns:1fr 1fr}.title h1{letter-spacing:-3px}}
     @media print{main{padding:30px;min-height:auto}nav,#hint,#notes,dialog,.colors,#progress{display:none!important}}
   </style>
 </head>
@@ -54,7 +55,7 @@
   </aside>
   <dialog id="index" aria-labelledby="index-title"><div class="panel-head"><h2 id="index-title">Todas las diapositivas</h2><button id="close-index" aria-label="Cerrar índice">×</button></div><div id="index-list"></div></dialog>
   <p id="error" role="status"></p><p id="announcement" class="sr-only" aria-live="polite"></p>
-  <noscript>Activa JavaScript para ver las 14 diapositivas de WebMCP.</noscript>
+  <noscript>Activa JavaScript para ver las diapositivas de WebMCP.</noscript>
   <script type="module">
     import { slides } from './slides-content.mjs';
     const $ = id => document.getElementById(id);
@@ -62,6 +63,7 @@
     let current = hashSlide();
     function node(tag, text, className) { const el = document.createElement(tag); if (text != null) el.textContent = text; if (className) el.className = className; return el; }
     function list(lines) { const ul = node('ul', null, 'points'); lines.forEach(line => ul.append(node('li', line.replace(/^•\s*/, '')))); return ul; }
+    function demoLink(raw) { const url = new URL(raw, location.href); if (!['https:', 'http:'].includes(url.protocol)) return null; if (['localhost', '127.0.0.1'].includes(url.hostname)) return location.origin + url.pathname + url.search + url.hash; return url.href; }
     function render() {
       const data = slides[current], slide = $('slide');
       slide.replaceChildren(node('h1', data.title)); slide.className = data.type; slide.setAttribute('aria-label', `Diapositiva ${current + 1}: ${data.title}`);
@@ -70,12 +72,15 @@
       else if (data.type === 'comparison') {
         const columns = node('div', null, 'columns');
         [data.leftContent, data.rightContent].forEach(lines => { const section = node('section'); section.append(node('h2', lines[0]), list(lines.slice(1))); columns.append(section); }); slide.append(columns);
+      } else if (data.type === 'bento' || data.type === 'stats') {
+        const grid = node('div', null, 'stats-grid'); (data.stats || []).forEach(stat => { const card = node('section', null, 'stat'); card.append(node('h2', stat.label), node('p', stat.description || '')); grid.append(card); }); slide.append(grid);
       } else { slide.append(list(data.content || [])); }
-      if (data.type === 'demo') { const link = node('a', 'Abrir demo de TacoAgent →', 'demo-link'); link.href = '/'; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); }
+      if (data.caption) slide.append(node('p', data.caption, 'caption'));
+      if (data.demoUrl) { const href = demoLink(data.demoUrl); if (href) { const link = node('a', 'Abrir TacoAgent →', 'demo-link'); link.href = href; link.target = '_blank'; link.rel = 'noopener'; slide.append(link); } }
       $('count').textContent = `${current + 1} / ${slides.length}`; $('prev').disabled = current === 0; $('next').disabled = current === slides.length - 1;
       $('progress').firstElementChild.style.width = `${(current + 1) / slides.length * 100}%`;
       $('notes-body').textContent = data.notes || ''; $('sources').replaceChildren();
-      (data.sources || []).forEach(source => { const url = new URL(source); if (!['https:', 'http:'].includes(url.protocol)) return; const li = node('li'), a = node('a', source); a.href = url.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; li.append(a); $('sources').append(li); });
+      (data.sources || []).forEach(source => { const href = demoLink(source); if (!href) return; const url = new URL(href); const li = node('li'), a = node('a', source); a.href = url.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; li.append(a); $('sources').append(li); });
       $('announcement').textContent = `Diapositiva ${current + 1} de ${slides.length}: ${data.title}`;
       document.title = `${current + 1} · ${data.title} · WebMCP`; window.scrollTo(0, 0);
     }

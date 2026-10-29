@@ -1,61 +1,113 @@
-# Guion de WebMCP en español
+# WebMCP: guion para presentar
 
-**Aileen Villanueva · 29 de octubre de 2026 · 30 minutos**
+**Aileen Villanueva · 29 de octubre de 2026 · 22 slides · 30 minutos**
 
-Presentación adaptada de la charla «Prepara tu webapp para los agentes de nuestro día a día». La explicación ocupa unos 21 minutos, el demo 7 y el cierre 2. Si necesitas recortar, omite el ejemplo MCP del minuto 5 y limita la sección Types a 30 segundos.
+El hilo recorre cinco partes: por qué nace WebMCP, qué es, para qué se usa, cómo difiere de MCP y el estado de la propuesta de estándar junto con cómo empezar a usarlo hoy. El demo principal es **TacoAgent**, la aplicación de restaurantes y carrito del repositorio.
+
+Plan base para ensayar: **18 minutos de explicación, 10 de demo y 2 de cierre**. Son estimaciones, no una presentación humana cronometrada.
 
 ## Recorrido de las slides
 
-| Tiempo | Slide | Idea para decir en voz alta |
+| Tiempo aproximado | Slide | Mensaje que desarrolla |
 | --- | --- | --- |
-| 0:00–1:00 | 1. WebMCP | «Vamos a darle a nuestra web un contrato que un agente pueda usar. Lo veremos con una app ficticia de comida.» |
-| 1:00–3:00 | 2. La interacción con una web | «Una intención como agregar comida al carrito puede tener una función explícita. La app sigue validando y mostrando el resultado.» |
-| 3:00–5:00 | 3. Qué expone WebMCP | «La página declara nombre, descripción, schema y función. El navegador conecta esas capacidades con un agente.» |
-| 5:00–6:30 | 4. MCP y WebMCP | «MCP conecta clientes y servidores. WebMCP expone capacidades del documento web activo. Podemos usar ambos.» |
-| 6:30–8:00 | 5. Dos APIs complementarias | «HTML para formularios. JavaScript para acciones y disponibilidad dinámica.» |
-| 8:00–10:00 | 6. Una herramienta declarativa | «Los campos del formulario describen parámetros. toolautosubmit decide si el agente puede enviarlo directamente.» |
-| 10:00–12:00 | 7. Una herramienta imperativa | «El schema ayuda al agente. La función aplica las reglas de negocio y actualiza la misma UI.» |
-| 12:00–14:00 | 8. Herramientas según el estado | «Con el carrito vacío, checkout todavía no tiene sentido. La disponibilidad debe reflejar ese estado.» |
-| 14:00–16:00 | 9. Seguridad en cada acción | «Una annotation comunica intención. El código valida, el backend autoriza y una persona revisa las acciones con consecuencias.» |
-| 16:00–17:30 | 10. Types y Skill | «Los tipos y la Skill ayudan a implementar bien. El navegador sigue necesitando soporte real.» |
-| 17:30–19:00 | 11. El feedback | «También necesitamos saber qué falló después de lanzar. El reporting out-of-band es una propuesta, y hoy podemos instrumentar nuestras funciones.» |
-| 19:00–20:30 | 12. Preparación | «Primero verificamos soporte. El Inspector permite ver e invocar las herramientas de esta página.» |
-| 20:30–21:30 | 13. Demo | «Veremos búsqueda, carrito, errores, herramientas dinámicas y una revisión humana.» |
-| 21:30–28:30 | Demo en TacoAgent | Seguir el recorrido de abajo. |
-| 28:30–30:00 | 14. Recursos | «Contrato claro, disponibilidad según estado y reglas aplicadas en código. Estas son las tres decisiones para empezar.» |
+| 0:00–0:30 | 1. WebMCP | Las cinco partes y el demo de TacoAgent. |
+| 0:30–1:10 | 2. Por qué nace | Convertir una intención humana en acciones de la página. |
+| 1:10–2:00 | 3. Sarah | El mismo widget de reserva, con UI y con herramientas. |
+| 2:00–2:40 | 4. UI y contrato | addToCart expresa una acción y conserva sus reglas. |
+| 2:40–3:20 | 5. Qué es | Una propuesta de API del navegador para exponer capacidades. |
+| 3:20–4:00 | 6. Quién hace qué | La página declara, el navegador media y el cliente elige. |
+| 4:00–4:40 | 7. Dos APIs | Formulario de búsqueda y funciones para el carrito. |
+| 4:40–5:20 | 8. Usos | Comercio, agendas, aplicaciones de trabajo y herramientas creativas. |
+| 5:20–6:10 | 9. Aisle, Alza y Roque Nights | La disponibilidad debe seguir el contexto de la UI. |
+| 6:10–7:10 | 10. PayPal | Resultados de un sandbox pequeño, con límites visibles. |
+| 7:10–8:10 | 11. MCP y WebMCP | Servidores locales o remotos y documento activo. |
+| 8:10–8:50 | 12. Complementariedad | Pueden compartir servicios y reglas de negocio. |
+| 8:50–9:40 | 13. Estado actual | Propuesta abierta y borrador de Community Group. |
+| 9:40–10:20 | 14. Comprobar soporte | Detectar primero y configurar sólo si falta la API. |
+| 10:20–11:10 | 15. HTML | searchRestaurants como herramienta declarativa. |
+| 11:10–12:10 | 16. JavaScript | viewCart lee el mismo estado que la UI. |
+| 12:10–13:10 | 17. AbortSignal | addToCart depende del menú, checkout depende del carrito. |
+| 13:10–14:00 | 18. Types, Skill y DevTools | Recursos para desarrollar, inspeccionar y evaluar. |
+| 14:00–15:10 | 19. Seguridad | Validación, autorización y revisión humana. |
+| 15:10–18:00 | 20. Feedback | Fallos silenciosos, fileSupportTicket y propuesta OOB. |
+| 18:00–28:00 | 21. Demo: WebMCP en acción | Menú, carrito, errores y confirmación humana en TacoAgent. |
+| 28:00–30:00 | 22. Primer paso | Elegir una capacidad útil y abrir preguntas. |
 
-Las notas completas y las fuentes están en `public/slides/slides-content.mjs`, en el panel N de la presentación web y en las notas de la presentación editable.
+Las notas de cada slide desarrollan estas ideas y contienen sus fuentes. Los datos son los mismos en la presentación web y el deck editable.
 
-## Preparación antes de subir al escenario
+## Ejemplos actuales antes del código
 
-1. Abrir la presentación y TacoAgent en pestañas separadas.
-2. En un Chrome compatible, habilitar `chrome://flags/#enable-webmcp-testing` y reiniciar si hace falta.
-3. Comprobar que `document.modelContext` existe en la pestaña del demo. La disponibilidad depende de la versión, canal, flag y configuración del navegador.
-4. Abrir [WebMCP Model Context Tool Inspector](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd).
-5. Empezar con carrito vacío y datos ficticios. Los pedidos del demo son simulados.
-6. Tener abierto el código de `lib/webmcp.ts` para mostrar el registro y `AbortSignal`.
+### Sarah: misma reserva, dos rutas
 
-## Demo de siete minutos
+La [demo de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/) compara dos rutas de control sobre el mismo widget. Una interpreta la UI y la otra llama tres herramientas. Los nodos y tools ilustran ese caso. **No es un benchmark** de costo, velocidad o seguridad.
 
-### 0:00–1:00 · La UI y sus herramientas
+Una frase útil: «En una ruta el agente interpreta los controles. En la otra el sitio declara la capacidad y los argumentos que necesita.»
 
-Mostrar TacoAgent como lo usaría una persona. Abrir el Inspector y observar las herramientas disponibles. Explicar que la herramienta de búsqueda procede del formulario, mientras las operaciones del carrito proceden de JavaScript.
+### Aisle, Alza y Roque Nights
 
-Una invocación manual desde el Inspector demuestra la integración WebMCP. Si usas un cliente con un modelo conectado y lenguaje natural, identifica ese cliente. No presentar una prueba manual como si un agente autónomo la hubiera decidido.
+Los ejemplos proceden del texto de André Bandarra aportado en la conversación:
+
+- Aisle habilita `finalize_chart` cuando todos los invitados tienen asiento y no hay violaciones de reglas.
+- Alza ofrece `extend_selected_wall` con una sola pared seleccionada.
+- Roque Nights espera las llamadas activas antes de retirar herramientas.
+
+Conectar con TacoAgent: «Agregar un producto requiere un menú abierto. Solicitar checkout requiere un carrito con productos. El registro debe reflejar esas precondiciones.»
+
+### PayPal: alcance de las cifras
+
+La [publicación de PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/) respalda las tres métricas de la slide. El ensayo compra una tarjeta de regalo en un sandbox pequeño. Los resultados varían según tienda, catálogo y asistente. El comprador conserva la revisión y aprobación del pago.
+
+## Preparación antes de presentar
+
+Dejar abiertas estas pestañas:
+
+- Presentación: `http://127.0.0.1:3002/`.
+- TacoAgent: `http://127.0.0.1:3001/`.
+- [Comparación visual de Sarah](https://webmcp-demo-sdras.netlify.app/), si se mostrará en vivo.
+
+Comprobar primero en la pestaña del demo:
+
+```js
+Boolean(document.modelContext)
+```
+
+Si hay soporte, continuar. Sólo si falta, seguir la [guía oficial de desarrollo local](https://developer.chrome.com/docs/ai/webmcp), habilitar `chrome://flags/#enable-webmcp-testing` cuando corresponda y reiniciar. Hacer la configuración antes de presentar.
+
+Abrir **Chrome DevTools > Application > WebMCP** para inspeccionar herramientas y probar llamadas. La extensión Inspector es opcional. Confirmar que el indicador de TacoAgent informa que los registros nativos se completaron. El listado de la UI describe las capacidades del flujo, mientras el contador nativo informa de registros imperativos completados.
+
+El panel **Ensayo guiado** es un respaldo local: sus botones llaman las mismas funciones de negocio, sin IA y sin fingir una conexión WebMCP. Si se usa, decirlo. Una invocación manual nativa tampoco demuestra que un LLM haya elegido la herramienta.
+
+## Demo de TacoAgent: diez minutos
+
+### 0:00–1:00 · Mostrar la UI y el estado
+
+Pulsar «Reiniciar». Enseñar el catálogo de restaurantes, el carrito vacío y el indicador de soporte. Explicar que búsqueda, menú y carrito también funcionan con los controles humanos.
+
+En el catálogo de la UI hay inicialmente una herramienta declarativa, `searchRestaurants`, y dos imperativas, `getRestaurantInfo` y `viewCart`. El registro imperativo tiene dos herramientas en este estado.
 
 ### 1:00–2:00 · Búsqueda declarativa
 
-En `searchRestaurants`, usar la cocina mexicana. Si el formulario espera selección manual para enviar, pulsar «Buscar» como persona. Mostrar `toolname` y `tooldescription` en el HTML. Los nombres exactos de campos deben coincidir con los que muestra el Inspector.
+Usar `searchRestaurants` con cocina mexicana y precio sin filtro. En el Inspector, tomar los nombres de campos del formulario:
 
-### 2:00–3:30 · Consulta y carrito
+```json
+{ "cuisine": "mexicana", "priceRange": "all" }
+```
 
-Ejecutar `getRestaurantInfo` con el ID real `taco-loco`.
+Mostrar que la búsqueda devuelve restaurantes y sus IDs. Señalar `toolname`, `tooldescription` y `toolautosubmit` en el formulario. Este envío automático corresponde a una búsqueda que no crea pedidos.
+
+### 2:00–3:00 · Abrir un menú
+
+Ejecutar `getRestaurantInfo`:
 
 ```json
 { "restaurantId": "taco-loco" }
 ```
 
-Ejecutar `addToCart`. Copiar el schema del Inspector si el build cambia campos.
+El menú de Taco Loco aparece en la UI y devuelve productos, precios e IDs. La herramienta `addToCart` pasa a estar disponible. Este callback cambia la selección, por lo que no se describe como una lectura pura.
+
+### 3:00–4:30 · Agregar productos
+
+Ejecutar `addToCart`:
 
 ```json
 {
@@ -65,50 +117,82 @@ Ejecutar `addToCart`. Copiar el schema del Inspector si el build cambia campos.
 }
 ```
 
-El producto «Tacos de Carnitas» representa una orden de tres tacos en los datos ficticios. Quantity 2 significa dos órdenes. Mostrar el carrito y comprobar el resultado con `viewCart`.
+En los datos ficticios, «Tacos de Carnitas» es una orden de tres tacos. Quantity 2 agrega dos órdenes. El total es **MXN 25.98**. Mostrar el carrito y la respuesta de la operación.
 
-### 3:30–4:30 · Un error recuperable
+Cada llamada a `addToCart` agrega una línea de productos. Consultar el carrito antes de repetir una llamada si no se sabe si ya se ejecutó.
 
-Repetir `addToCart` con `quantity: 0`, o usar `menuItemId: "quesadilla"`, que figura sin stock. Leer el error y explicar qué parámetro debe corregir el agente. El carrito válido debe conservarse.
+### 4:30–5:30 · Un error que permite corregir
 
-### 4:30–5:30 · Disponibilidad dinámica
+Intentar un producto agotado:
 
-Mostrar las operaciones del carrito que aparecen cuando hay productos. Vaciar con `clearCart` y observar el cambio. Agregar otra vez una orden para continuar. Mostrar en código el `AbortController` y la señal asociada al registro.
+```json
+{
+  "restaurantId": "taco-loco",
+  "menuItemId": "quesadilla",
+  "quantity": 1
+}
+```
 
-### 5:30–7:00 · Revisión y confirmación
+La respuesta informa que no está disponible y el carrito válido permanece. Como alternativa, probar `quantity: 0` para mostrar que el contrato y la función rechazan una cantidad inválida. La app exige un entero entre 1 y 10.
 
-Abrir `checkout` y usar datos ficticios, por ejemplo nombre «Demo JSConf» y dirección «Calle Ejemplo 123». Mostrar productos y total en la revisión. La persona confirma el pedido simulado en la UI. Explicar que la herramienta no puede autoaprobar ese paso.
+### 5:30–6:30 · Comparar respuesta y estado
 
-## Respaldo si no hay soporte nativo
+Ejecutar `viewCart` con `{}`. La respuesta contiene `success`, `message`, `items`, `itemCount`, `total` y `currency`. Comparar productos y total con la UI.
 
-Decir: «Este navegador no ofrece la API nativa en esta sesión. Haré el mismo recorrido manual y veremos a qué función corresponde cada paso.»
+Frase útil: «La herramienta y la persona leen el mismo estado. El esquema explica los argumentos y la función aplica las reglas.»
 
-Buscar comida mexicana, abrir Taco Loco, agregar una orden, revisar el carrito y completar la revisión con los controles de la app. Mostrar el snippet de registro y explicar qué vería el Inspector en un navegador compatible. El respaldo demuestra el flujo de negocio y el diseño de herramientas. No demuestra una llamada WebMCP nativa.
+### 6:30–8:00 · Disponibilidad dinámica
 
-## Preguntas frecuentes
+Con productos aparecen `clearCart` y `checkout`. Vaciar con `clearCart` y observar que esas operaciones desaparecen. El menú queda abierto, así que `addToCart` sigue disponible. Agregar otra vez las dos órdenes para continuar.
 
-**¿Ya es un estándar W3C?** La publicación actual es un borrador de Community Group. La API todavía evoluciona.
+| Estado | Herramientas imperativas | Total con la búsqueda declarativa |
+| --- | --- | --- |
+| Inicio | 2 | 3 |
+| Menú abierto | 3 | 4 |
+| Carrito con productos | 5 | 6 |
+| Carrito vacío, menú abierto | 3 | 4 |
 
-**¿Reemplaza MCP?** Expone capacidades del documento activo. Puede complementar integraciones MCP.
+Mostrar `ToolRegistry` en `lib/webmcp.ts`: conserva registros que siguen siendo válidos y retira los demás con `AbortController`. Retirar un registro no cancela por sí mismo una ejecución activa.
 
-**¿El schema garantiza que la acción sea segura?** La app debe validar entradas, estado y permisos en código. Las annotations son señales para el agente.
+### 8:00–10:00 · Revisión y confirmación humana
 
-**¿Compartir la sesión evita implementar autorización?** El backend debe seguir autorizando cada operación.
+Ejecutar `checkout` con `{}`. Devuelve `success: true` y `status: "pending-human-review"`. Se abre un diálogo con productos y total.
 
-**¿Reporting out-of-band ya es una API que puedo activar?** El artículo de André Bandarra plantea una propuesta. Hoy puedes instrumentar tus herramientas y flujos con tu telemetría habitual.
+La persona compara el carrito y pulsa **Confirmar pedido ficticio**. `confirmOrder` sólo pertenece a ese botón y no está registrado como herramienta. La app muestra un ID de pedido local y vacía el carrito. No hay cobro, envío ni almacenamiento de datos personales.
 
-**¿Qué cambió respecto a mi charla anterior?** La API vigente usa `document.modelContext`, el registro acepta `AbortSignal`, el contenido separa implementación disponible y propuestas, y el demo incorpora revisión humana para finalizar.
+Decir: «La herramienta preparó la revisión. La persona confirmó un efecto concreto después de verlo.»
 
-## Fuentes primarias
+## Respaldo local sin IA
 
-- [Documentación de Chrome](https://developer.chrome.com/docs/ai/webmcp)
-- [API imperativa](https://developer.chrome.com/docs/ai/webmcp/imperative-api)
-- [API declarativa](https://developer.chrome.com/docs/ai/webmcp/declarative-api)
-- [Seguridad](https://developer.chrome.com/docs/ai/webmcp/secure-tools)
-- [Guía de herramientas JavaScript](https://developer.chrome.com/docs/modern-web-guidance/guides/webmcp/agentic-javascript-tools)
-- [Borrador de especificación](https://webmachinelearning.github.io/webmcp/)
-- [WebMCP Types](https://github.com/webmachinelearning/webmcp-types)
-- [Skill oficial de desarrollo](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md)
-- [Propuesta de feedback fuera del flujo del agente](https://bandarra.me/posts/webmcp-feedback-loop)
+Si la API nativa no está disponible en esa sesión, usar los botones de **Ensayo guiado**: buscar cocina mexicana, abrir Taco Loco, probar el producto agotado, agregar dos órdenes y solicitar revisión. Decir: «Estos botones llaman JavaScript local. Muestro el flujo de negocio y su relación con las herramientas, sin una llamada WebMCP nativa.»
 
-Los enlaces X compartidos no fueron accesibles durante la verificación. Las afirmaciones técnicas se apoyan en las fuentes primarias anteriores. Los ejemplos de Aisle, Alza y Roque Nights proceden del texto de LinkedIn aportado en la conversación.
+No cambiar la regla de stock o cantidades para salvar el recorrido. Un error claro forma parte de lo que queremos mostrar.
+
+## Cierre y preguntas
+
+«Una primera capacidad puede ser una lectura como viewCart. Declara su propósito, comprueba el resultado en la UI, prueba errores y después evalúa las decisiones con un agente compatible.»
+
+**¿Es un estándar W3C?** Es una propuesta abierta. La publicación del 27 de octubre es un Draft Community Group Report, no un estándar W3C ni un documento de Standards Track.
+
+**¿Reemplaza MCP?** Son contextos distintos que pueden convivir: servicios locales o remotos y capacidades de la página activa.
+
+**¿Las annotations dan permisos?** Comunican intención. La aplicación y su backend aplican validación y autorización.
+
+**¿Run tool evalúa a un modelo?** Prueba una invocación manual. La decisión de un LLM requiere una evaluación con un agente compatible.
+
+**¿Reporting OOB ya está disponible?** El artículo de André Bandarra propone ese canal. Hoy podemos instrumentar nuestras herramientas y recorridos con telemetría propia y minimización de datos.
+
+## Fuentes
+
+- [Demo de Sarah Drasner](https://webmcp-demo-sdras.netlify.app/).
+- [Resultados y enfoque de PayPal](https://developer.paypal.com/community/blog/WebMCP_PayPal_Agent_Ready/).
+- [Introducción de Chrome](https://developer.chrome.com/docs/ai/webmcp) y [comparación con MCP](https://developer.chrome.com/docs/ai/webmcp/compare-mcp).
+- [API declarativa](https://developer.chrome.com/docs/ai/webmcp/declarative-api) y [API imperativa](https://developer.chrome.com/docs/ai/webmcp/imperative-api).
+- [Diseño](https://developer.chrome.com/docs/ai/webmcp/build-tools) y [seguridad](https://developer.chrome.com/docs/ai/webmcp/secure-tools).
+- [Borrador de especificación](https://webmachinelearning.github.io/webmcp/).
+- [Tipos oficiales](https://github.com/webmachinelearning/webmcp-types) y [Skill oficial](https://github.com/GoogleChromeLabs/webmcp-tools/blob/main/webmcp-skills/skills/build-webmcp-tools/SKILL.md).
+- [DevTools WebMCP](https://developer.chrome.com/docs/devtools/application/webmcp).
+- [Propuesta de feedback fuera del flujo](https://bandarra.me/posts/webmcp-feedback-loop).
+- [Código de TacoAgent](https://github.com/aileenvl/webmcp-demo).
+
+Los enlaces X compartidos no fueron accesibles. No se atribuyen afirmaciones a esos posts. Los ejemplos de Aisle, Alza y Roque Nights proceden del texto aportado en la conversación.
