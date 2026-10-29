@@ -1,659 +1,174 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { restaurants, type Restaurant, type CartItem } from '@/lib/mock-data'
-import { registerWebMCPTool, isWebMCPAvailable } from '@/lib/webmcp'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
+import { restaurants, type Restaurant } from '@/lib/mock-data'
+import { DemoStore, type ToolInput, type ToolResult } from '@/lib/demo-state'
+import { getModelContext, ToolRegistry, type ToolDefinition } from '@/lib/webmcp'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Search, ShoppingCart, UtensilsCrossed, Info, Trash2, Star, Clock } from 'lucide-react'
+import { ShoppingCart, Search, UtensilsCrossed, Code2, RotateCcw, Check, ShieldCheck } from 'lucide-react'
+
+const money = (value: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value)
+const emptySchema = { type: 'object' as const, properties: {}, additionalProperties: false }
+const descriptions: Record<string, string> = {
+  getRestaurantInfo: 'Abre el menú de un restaurante y devuelve productos, precios e IDs. Usa los IDs de searchRestaurants.',
+  viewCart: 'Consulta el carrito actual y su total en MXN. También funciona cuando está vacío.',
+  addToCart: 'Agrega un producto del restaurante cuyo menú está abierto. quantity debe ser un entero entre 1 y 10. Valida disponibilidad.',
+  clearCart: 'Vacía el carrito local de demostración. Invalida cualquier revisión pendiente.',
+  checkout: 'Solicita revisión del carrito en la interfaz. Devuelve pending-human-review. No confirma, cobra ni envía pedidos.',
+}
+
+function makeTools(store: DemoStore, execute: (name: string, input: ToolInput) => ToolResult): ToolDefinition[] {
+  return store.toolNames().map(name => ({
+    name, description: descriptions[name],
+    inputSchema: name === 'getRestaurantInfo' ? {
+      type: 'object', properties: { restaurantId: { type: 'string', enum: restaurants.map(r => r.id) } }, required: ['restaurantId'], additionalProperties: false,
+    } : name === 'addToCart' ? {
+      type: 'object', properties: {
+        restaurantId: { type: 'string', description: 'ID del restaurante cuyo menú está abierto.' },
+        menuItemId: { type: 'string', description: 'ID de un producto disponible en ese menú.' },
+        quantity: { type: 'integer', minimum: 1, maximum: 10 },
+      }, required: ['restaurantId', 'menuItemId', 'quantity'], additionalProperties: false,
+    } : emptySchema,
+    annotations: { readOnlyHint: name === 'viewCart', consequentialHint: false },
+    execute: async input => execute(name, input),
+  }))
+}
 
 export default function Home() {
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
-  const [notification, setNotification] = useState<string | null>(null)
-  const [webmcpStatus, setWebmcpStatus] = useState<'checking' | 'available' | 'unavailable'>('checking')
+  const [store] = useState(() => new DemoStore(restaurants))
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
+  const [results, setResults] = useState<Restaurant[]>(restaurants)
+  const [lastResult, setLastResult] = useState<ToolResult | null>(null)
+  const [nativeStatus, setNativeStatus] = useState('Comprobando API del navegador…')
+  const [nativeTools, setNativeTools] = useState<string[]>([])
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const selected = restaurants.find(r => r.id === state.selectedRestaurantId)
+  const total = state.cart.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0)
+  const availableNames = ['searchRestaurants', ...store.toolNames()]
 
-  const cartRef = useRef<CartItem[]>(cart)
-
-  // Keep cartRef in sync with cart state
   useEffect(() => {
-    cartRef.current = cart
-  }, [cart])
+    let mounted = true
+    const context = getModelContext()
+    if (!context) {
+      Promise.resolve().then(() => { if (mounted) setNativeStatus('WebMCP nativo no disponible · el ensayo local sí funciona') })
+      return () => { mounted = false }
+    }
+    const registry = new ToolRegistry(context)
+    const execute = (name: string, input: ToolInput) => {
+      const result = store.run(name, input)
+      if (mounted) setLastResult(result)
+      return result
+    }
+    const sync = () => {
+      const tools = makeTools(store, execute)
+      void registry.setTools(tools).then(() => {
+        if (mounted) { setNativeStatus('WebMCP nativo disponible'); setNativeTools(tools.map(tool => tool.name)) }
+      }).catch((error: unknown) => {
+        if (mounted) setNativeStatus(`No se pudieron registrar herramientas: ${error instanceof Error ? error.message : 'error del navegador'}`)
+      })
+    }
+    sync()
+    const unsubscribe = store.subscribe(sync)
+    return () => { mounted = false; unsubscribe(); registry.dispose() }
+  }, [store])
 
   useEffect(() => {
-    const available = isWebMCPAvailable()
-    setWebmcpStatus(available ? 'available' : 'unavailable')
+    const dialog = dialogRef.current
+    if (state.pendingReview && dialog && !dialog.open) dialog.showModal()
+    if (!state.pendingReview && dialog?.open) dialog.close()
+  }, [state.pendingReview])
 
-    if (!available) {
-      console.warn('⚠️ WebMCP not available')
-      return
-    }
-
-    registerImperativeTools()
-    setupWebMCPEventListeners()
-
-    return () => {
-      window.removeEventListener('toolactivated', handleToolActivated)
-      window.removeEventListener('toolcancel', handleToolCancel)
-    }
-  }, [cart])
-
-
-  const handleSearchSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const run = (name: string, input: ToolInput = {}) => {
+    const result = store.run(name, input)
+    setLastResult(result)
+    return result
+  }
+  const search = (input: ToolInput) => {
+    const result = store.search(input)
+    if (result.success) setResults(result.restaurants as Restaurant[])
+    setLastResult(result)
+    return result
+  }
+  const onSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const cuisine = formData.get('cuisine') as string
-    const priceRange = formData.get('priceRange') as string
-
-    console.log('🔍 searchRestaurants submitted:', { cuisine, priceRange })
-
-    let filtered = restaurants
-    if (cuisine && cuisine !== 'all') {
-      filtered = filtered.filter(r => r.cuisine.toLowerCase() === cuisine.toLowerCase())
-    }
-    if (priceRange && priceRange !== 'all') {
-      filtered = filtered.filter(r => r.priceRange === priceRange)
-    }
-
-    const response = {
-      success: true,
-      count: filtered.length,
-      restaurants: filtered.map(r => ({
-        id: r.id,
-        name: r.name,
-        cuisine: r.cuisine,
-        priceRange: r.priceRange,
-        rating: r.rating,
-        deliveryTime: r.deliveryTime,
-        menu: r.menu.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          inStock: item.inStock
-        }))
-      })),
-      message: `Found ${filtered.length} restaurants`
-    }
-
-    showNotification(`🔍 Found ${filtered.length} restaurants`)
-    console.log('✅ Search complete:', response)
-
-    // WebMCP requires respondWith() when preventDefault() is called
-    const nativeEvent = event.nativeEvent as any
-    if (nativeEvent.respondWith) {
-      nativeEvent.respondWith(Promise.resolve(response))
-    }
-
-    return response
+    const data = new FormData(event.currentTarget)
+    const result = search({ cuisine: data.get('cuisine'), priceRange: data.get('priceRange') })
+    const nativeEvent = event.nativeEvent as SubmitEvent & { agentInvoked?: boolean; respondWith?: (value: Promise<ToolResult>) => void }
+    if (nativeEvent.agentInvoked && nativeEvent.respondWith) nativeEvent.respondWith(Promise.resolve(result))
   }
-
-  const handleCheckoutSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const name = formData.get('name') as string
-    const address = formData.get('address') as string
-    const phone = formData.get('phone') as string
-
-    console.log('📦 checkout submitted:', { name, address, phone })
-
-    const currentCart = cartRef.current
-
-    if (!name || !address || !phone) {
-      showNotification('❌ All fields required')
-      const error = { success: false, error: 'All fields required: name, address, and phone number' }
-      const nativeEvent = event.nativeEvent as any
-      if (nativeEvent.respondWith) {
-        nativeEvent.respondWith(Promise.resolve(error))
-      }
-      return error
-    }
-
-    if (currentCart.length === 0) {
-      showNotification('❌ Cart is empty')
-      const error = { success: false, error: 'Cart is empty. Use addToCart tool to add items first.' }
-      const nativeEvent = event.nativeEvent as any
-      if (nativeEvent.respondWith) {
-        nativeEvent.respondWith(Promise.resolve(error))
-      }
-      return error
-    }
-
-    const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
-    const orderId = `ORD-${Date.now()}`
-
-    const response = {
-      success: true,
-      orderId,
-      customerName: name,
-      deliveryAddress: address,
-      phone,
-      total: `$${total.toFixed(2)}`,
-      itemCount: currentCart.length,
-      items: currentCart.map(item => ({
-        name: item.menuItem.name,
-        quantity: item.quantity,
-        price: item.menuItem.price
-      })),
-      estimatedDelivery: '30-40 minutes',
-      message: `Order ${orderId} confirmed!`
-    }
-
-    // Clear cart and show notification
-    setCart([])
-    showNotification(`✅ Order ${orderId} confirmed!`)
-    console.log('✅ Checkout complete:', response)
-
-    // WebMCP requires respondWith() when preventDefault() is called
-    const nativeEvent = event.nativeEvent as any
-    if (nativeEvent.respondWith) {
-      nativeEvent.respondWith(Promise.resolve(response))
-    }
-
-    return response
-  }
-
-  const handleAddToCartSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const restaurantId = formData.get('restaurantId') as string
-    const menuItemId = formData.get('menuItemId') as string
-    const quantity = parseInt(formData.get('quantity') as string)
-
-    console.log('🛒 addToCart submitted:', { restaurantId, menuItemId, quantity })
-
-    const restaurant = restaurants.find(r => r.id === restaurantId)
-    if (!restaurant) {
-      console.log('❌ Restaurant not found:', restaurantId)
-      const error = { success: false, error: `Restaurant not found: ${restaurantId}. Available IDs: ${restaurants.map(r => r.id).join(', ')}` }
-      showNotification('❌ Restaurant not found')
-      const nativeEvent = event.nativeEvent as any
-      if (nativeEvent.respondWith) {
-        nativeEvent.respondWith(Promise.resolve(error))
-      }
-      return error
-    }
-
-    const menuItem = restaurant.menu.find(m => m.id === menuItemId)
-    if (!menuItem) {
-      console.log('❌ Menu item not found:', menuItemId)
-      const error = { success: false, error: `Item not found: ${menuItemId}. Available IDs in ${restaurant.name}: ${restaurant.menu.map(m => m.id).join(', ')}` }
-      showNotification('❌ Menu item not found')
-      const nativeEvent = event.nativeEvent as any
-      if (nativeEvent.respondWith) {
-        nativeEvent.respondWith(Promise.resolve(error))
-      }
-      return error
-    }
-
-    if (!menuItem.inStock) {
-      console.log('❌ Item out of stock:', menuItem.name)
-      const error = { success: false, error: `${menuItem.name} is out of stock` }
-      showNotification(`❌ ${menuItem.name} is out of stock`)
-      const nativeEvent = event.nativeEvent as any
-      if (nativeEvent.respondWith) {
-        nativeEvent.respondWith(Promise.resolve(error))
-      }
-      return error
-    }
-
-    // Add to cart
-    setCart(prev => [...prev, { menuItem, restaurant, quantity, customizations: {} }])
-
-    const response = {
-      success: true,
-      message: `Added ${quantity}x ${menuItem.name} to cart`,
-      cartCount: cart.length + 1
-    }
-
-    showNotification(`✅ ${quantity}x ${menuItem.name} added!`)
-    console.log('✅ addToCart complete:', response)
-
-    // WebMCP requires respondWith() when preventDefault() is called
-    const nativeEvent = event.nativeEvent as any
-    if (nativeEvent.respondWith) {
-      nativeEvent.respondWith(Promise.resolve(response))
-    }
-
-    return response
-  }
-
-  const registerImperativeTools = () => {
-
-    registerWebMCPTool({
-      name: 'viewCart',
-      description: 'View cart contents',
-      inputSchema: { type: 'object', properties: {} },
-      execute: async () => {
-        console.log('🤖 viewCart called')
-        const currentCart = cartRef.current
-
-        if (currentCart.length === 0) {
-          console.log('📤 Cart is empty')
-          return { message: 'Cart is empty' }
-        }
-
-        const total = currentCart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
-        const response = {
-          items: currentCart.map(item => ({
-            name: item.menuItem.name,
-            quantity: item.quantity,
-            price: item.menuItem.price
-          })),
-          total: total.toFixed(2),
-          itemCount: currentCart.length
-        }
-        console.log('📤 Returning:', response)
-        return response
-      }
-    })
-
-    registerWebMCPTool({
-      name: 'clearCart',
-      description: 'Clear the shopping cart',
-      inputSchema: { type: 'object', properties: {} },
-      execute: async () => {
-        console.log('🤖 clearCart called')
-        const currentCart = cartRef.current
-        const itemCount = currentCart.length
-        setCart([])
-        const response = { success: true, message: `Removed ${itemCount} items` }
-        console.log('📤 Returning:', response)
-        showNotification('🗑️ Cart cleared')
-        return response
-      }
-    })
-
-    registerWebMCPTool({
-      name: 'getRestaurantInfo',
-      description: 'Get restaurant information and menu',
-      inputSchema: {
-        type: 'object',
-        properties: { restaurantId: { type: 'string' } },
-        required: ['restaurantId']
-      },
-      execute: async ({ restaurantId }) => {
-        console.log('🤖 getRestaurantInfo called with:', { restaurantId })
-        const restaurant = restaurants.find(r => r.id === restaurantId)
-
-        if (!restaurant) {
-          console.log('❌ Restaurant not found:', restaurantId)
-          return { success: false, error: `Restaurant not found: ${restaurantId}. Available IDs: ${restaurants.map(r => r.id).join(', ')}` }
-        }
-
-        const response = {
-          success: true,
-          name: restaurant.name,
-          cuisine: restaurant.cuisine,
-          rating: restaurant.rating,
-          menu: restaurant.menu.map(i => ({
-            id: i.id,
-            name: i.name,
-            description: i.description,
-            price: i.price,
-            inStock: i.inStock
-          }))
-        }
-        console.log('📤 Returning:', response)
-        return response
-      }
-    })
-  }
-
-  const setupWebMCPEventListeners = () => {
-    window.addEventListener('toolactivated', handleToolActivated)
-    window.addEventListener('toolcancel', handleToolCancel)
-  }
-
-  const handleToolActivated = () => showNotification('🤖 AI Agent is active')
-  const handleToolCancel = () => showNotification('⚠️ Operation cancelled')
-
-  const showNotification = (message: string) => {
-    console.log('🔔 Notification:', message)
-    setNotification(message)
-    setTimeout(() => setNotification(null), 5000)
-  }
-
-
-  const cartTotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800">
-      {notification && (
-        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-8 py-4 rounded-lg shadow-2xl animate-in slide-in-from-right text-lg font-semibold border-2 border-blue-400">
-          {notification}
-        </div>
-      )}
+    <main className="taco-shell">
+      <header className="taco-header">
+        <div className="taco-brand"><span aria-hidden="true">🌮</span><div><h1>TacoAgent</h1><p>Tu antojo, una herramienta a la vez</p></div></div>
+        <p className="native-status" role="status">{nativeStatus}</p>
+      </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <header className="mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                FoodHub
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300">
-                WebMCP Demo - AI-Ready Restaurant Platform
-              </p>
+      <div className="demo-banner"><Code2 size={20} aria-hidden="true" /><p><strong>Demo de WebMCP</strong> · Datos y pedidos ficticios. Los cambios viven sólo en esta pestaña.</p><button onClick={() => { store.reset(); setResults(restaurants); setLastResult(null) }} className="reset-button"><RotateCcw size={16} aria-hidden="true" /> Reiniciar</button></div>
+
+      <div className="taco-layout">
+        <section className="main-column" aria-label="Restaurantes y menú">
+          <section className="taco-section">
+            <div className="section-heading"><Search size={21} aria-hidden="true" /><h2>Encuentra tu próximo antojo</h2></div>
+            <p className="section-description">API declarativa: el formulario HTML se convierte en <code>searchRestaurants</code>.</p>
+            <form onSubmit={onSearch} toolname="searchRestaurants" tooldescription="Busca restaurantes por cocina y rango de precio. Devuelve sus IDs y menús. No crea pedidos." toolautosubmit="" className="search-form">
+              <label>Cocina<select name="cuisine" defaultValue="all"><option value="all">Todas</option><option value="mexicana">Mexicana</option><option value="italiana">Italiana</option><option value="japonesa">Japonesa</option></select></label>
+              <label>Precio<select name="priceRange" defaultValue="all"><option value="all">Todos</option><option value="$">$ · Económico</option><option value="$$">$$ · Medio</option><option value="$$$">$$$ · Alto</option></select></label>
+              <Button type="submit">Buscar restaurantes</Button>
+            </form>
+            <div className="restaurant-list">
+              {results.map(restaurant => <button key={restaurant.id} className={`restaurant-row ${selected?.id === restaurant.id ? 'selected' : ''}`} onClick={() => run('getRestaurantInfo', { restaurantId: restaurant.id })} aria-pressed={selected?.id === restaurant.id}>
+                <span className="food-emoji" aria-hidden="true">{restaurant.image}</span><span><strong>{restaurant.name}</strong><small>{restaurant.cuisine} · {restaurant.priceRange} · ★ {restaurant.rating}</small></span><span className="restaurant-time">{restaurant.deliveryTime}<small>Ver menú →</small></span>
+              </button>)}
+              {results.length === 0 && <p>No hay restaurantes con esos filtros. Prueba otra cocina o precio.</p>}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <ShoppingCart className="w-8 h-8 text-orange-600" />
-                {cart.length > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white px-2 py-1 text-xs font-bold min-w-[24px] h-6 flex items-center justify-center animate-pulse">
-                    {cart.length}
-                  </Badge>
-                )}
-              </div>
-              <Badge variant={webmcpStatus === 'available' ? 'default' : 'destructive'} className="text-sm px-4 py-2">
-                {webmcpStatus === 'available' ? 'WebMCP Active' : 'WebMCP Unavailable'}
-              </Badge>
-            </div>
-          </div>
-        </header>
+          </section>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="w-5 h-5" />
-                  Search Restaurants
-                </CardTitle>
-                <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={handleSearchSubmit}
-                  toolname="searchRestaurants"
-                  tooldescription="Search restaurants by cuisine type and price range. Returns restaurant details including full menu with item IDs for ordering."
-                  toolautosubmit="true"
-                  className="space-y-4"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="cuisine">Cuisine Type</Label>
-                    <select
-                      id="cuisine"
-                      name="cuisine"
-                      defaultValue="all"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <option value="all">All Cuisines</option>
-                      <option value="mexicana">Mexican</option>
-                      <option value="italiana">Italian</option>
-                      <option value="japonesa">Japanese</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="priceRange">Price Range</Label>
-                    <select
-                      id="priceRange"
-                      name="priceRange"
-                      defaultValue="all"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <option value="all">All Prices</option>
-                      <option value="$">$ - Budget</option>
-                      <option value="$$">$$ - Moderate</option>
-                      <option value="$$$">$$$ - Premium</option>
-                    </select>
-                  </div>
-                  <Button type="submit" className="w-full">Search Restaurants</Button>
-                </form>
-              </CardContent>
-            </Card>
+          <section className="taco-section">
+            <div className="section-heading"><UtensilsCrossed size={21} aria-hidden="true" /><h2>{selected ? `Menú de ${selected.name}` : 'Abre un menú para continuar'}</h2></div>
+            {selected ? <><p className="section-description"><code>addToCart</code> apareció al abrir este menú. Precios de demostración en MXN.</p><div className="menu-list">{selected.menu.map(item => <article key={item.id} className="menu-row"><span className="food-emoji" aria-hidden="true">{item.image}</span><div className="menu-copy"><h3>{item.name}</h3><p>{item.description}</p><code>{item.id}</code></div><div className="menu-action"><strong>{money(item.price)}</strong><Button disabled={!item.inStock} onClick={() => run('addToCart', { restaurantId: selected.id, menuItemId: item.id, quantity: 1 })}>{item.inStock ? 'Agregar' : 'Agotado'}</Button></div></article>)}</div></> : <p className="empty-state">El agente y tú comparten la misma interfaz. Selecciona un restaurante para habilitar la herramienta de agregar productos.</p>}
+          </section>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Add to Cart
-                </CardTitle>
-                <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={handleAddToCartSubmit}
-                  toolname="addToCart"
-                  tooldescription="Add product to shopping cart. Requires restaurant ID, menu item ID, and quantity."
-                  toolautosubmit="true"
-                  className="space-y-4"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="restaurantId">Restaurant ID</Label>
-                    <Input
-                      id="restaurantId"
-                      name="restaurantId"
-                      placeholder="e.g., taco-loco, pizza-pronto, sushi-zen"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="menuItemId">Menu Item ID</Label>
-                    <Input
-                      id="menuItemId"
-                      name="menuItemId"
-                      placeholder="e.g., lasagna, taco-carnitas"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity</Label>
-                    <Input
-                      id="quantity"
-                      name="quantity"
-                      type="number"
-                      min="1"
-                      max="10"
-                      defaultValue="1"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">Add to Cart</Button>
-                </form>
-              </CardContent>
-            </Card>
+          <section className="taco-section guided-section">
+            <div className="section-heading"><Code2 size={21} aria-hidden="true" /><h2>Ensayo guiado</h2><span className="local-label">Local · sin IA</span></div>
+            <p className="section-description">Estos botones ejecutan las mismas funciones de negocio que las herramientas. No simulan una conexión WebMCP ni interpretan lenguaje natural.</p>
+            <ol className="guided-steps">
+              <li><button onClick={() => search({ cuisine: 'mexicana', priceRange: 'all' })}>1. Buscar cocina mexicana</button><code>searchRestaurants</code></li>
+              <li><button onClick={() => run('getRestaurantInfo', { restaurantId: 'taco-loco' })}>2. Abrir Taco Loco</button><code>getRestaurantInfo</code></li>
+              <li><button disabled={selected?.id !== 'taco-loco'} onClick={() => run('addToCart', { restaurantId: 'taco-loco', menuItemId: 'quesadilla', quantity: 1 })}>3. Probar producto agotado</button><code>addToCart → error</code></li>
+              <li><button disabled={selected?.id !== 'taco-loco'} onClick={() => run('addToCart', { restaurantId: 'taco-loco', menuItemId: 'taco-carnitas', quantity: 2 })}>4. Agregar 2 órdenes de tacos</button><code>addToCart → éxito</code></li>
+              <li><button disabled={!state.cart.length} onClick={() => run('checkout')}>5. Solicitar revisión</button><code>checkout → revisión</code></li>
+            </ol>
+          </section>
+        </section>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Checkout
-                </CardTitle>
-                <CardDescription>Declarative API (HTML) - Visible when agent uses it</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={handleCheckoutSubmit}
-                  toolname="checkout"
-                  tooldescription="Complete order with delivery information. Requires name, address, and phone number."
-                  toolautosubmit="true"
-                  className="space-y-4"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" name="name" placeholder="John Doe" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Delivery Address</Label>
-                    <Input id="address" name="address" placeholder="123 Main St" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" name="phone" type="tel" placeholder="+1 234 567 8900" required />
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Items:</span>
-                    <span className="font-semibold">{cart.length}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total:</span>
-                    <span className="text-orange-600">${cartTotal.toFixed(2)}</span>
-                  </div>
-                  <Button type="submit" className="w-full" size="lg" disabled={cart.length === 0}>
-                    {cart.length === 0 ? 'Cart Empty' : 'Confirm Order'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+        <aside className="side-column">
+          <section className="taco-section cart-section">
+            <div className="section-heading"><ShoppingCart size={21} aria-hidden="true" /><h2>Tu carrito</h2><span className="cart-count">{state.cart.reduce((count, item) => count + item.quantity, 0)}</span></div>
+            {state.cart.length ? <><ul className="cart-items">{state.cart.map((item, index) => <li key={`${item.menuItem.id}-${index}`}><span>{item.quantity} × {item.menuItem.name}</span><strong>{money(item.quantity * item.menuItem.price)}</strong></li>)}</ul><div className="cart-total"><span>Total de demostración</span><strong>{money(total)}</strong></div><Button className="checkout-button" onClick={() => run('checkout')}>Revisar pedido ficticio</Button><button className="text-button" onClick={() => run('clearCart')}>Vaciar carrito</button></> : <p className="empty-state">Todavía no hay antojos aquí. Agrega algo del menú.</p>}
+            {state.lastOrder && <p className="order-success"><Check size={18} aria-hidden="true" /> Pedido ficticio confirmado: {state.lastOrder}</p>}
+          </section>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-5 h-5" />
-                  Available Restaurants
-                </CardTitle>
-                <CardDescription>Click to view menu</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {restaurants.map(restaurant => (
-                  <Card
-                    key={restaurant.id}
-                    className="cursor-pointer hover:border-orange-500 transition-colors"
-                    onClick={() => setSelectedRestaurant(selectedRestaurant?.id === restaurant.id ? null : restaurant)}
-                  >
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-bold text-lg">{restaurant.name}</h3>
-                          <p className="text-sm text-muted-foreground">{restaurant.cuisine} • {restaurant.priceRange}</p>
-                        </div>
-                        <div className="text-right text-sm">
-                          <div className="flex items-center gap-1 mb-1">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-semibold">{restaurant.rating}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            <span>{restaurant.deliveryTime}</span>
-                          </div>
-                        </div>
-                      </div>
-                      {selectedRestaurant?.id === restaurant.id && (
-                        <>
-                          <Separator className="my-3" />
-                          <div className="space-y-2">
-                            <h4 className="font-semibold text-sm mb-2">Menu:</h4>
-                            {restaurant.menu.map(item => (
-                              <div key={item.id} className={`flex justify-between items-center p-2 rounded text-sm ${item.inStock ? 'bg-secondary' : 'bg-destructive/10 opacity-60'}`}>
-                                <div>
-                                  <span className="font-medium">{item.name}</span>
-                                  {!item.inStock && <Badge variant="destructive" className="ml-2 text-xs">Out of Stock</Badge>}
-                                </div>
-                                <span className="font-semibold text-orange-600">${item.price}</span>
-                              </div>
-                            ))}
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Use <code className="bg-muted px-1 rounded">addToCart</code> with restaurantId=&quot;{restaurant.id}&quot;
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </CardContent>
-            </Card>
+          <section className="taco-section tools-section">
+            <div className="section-heading"><Code2 size={21} aria-hidden="true" /><h2>Herramientas según el estado</h2></div>
+            <p className="section-description">1 declarativa + {store.toolNames().length} imperativas disponibles para este flujo.</p>
+            <ul>{availableNames.map(name => <li key={name}><span className="tool-dot" aria-hidden="true" /><code>{name}</code><small>{name === 'searchRestaurants' ? 'HTML' : 'JS'}</small></li>)}</ul>
+            <p className="native-detail">{nativeTools.length ? `${nativeTools.length} registros imperativos completados en la API nativa.` : 'Sin registro nativo confirmado. Puedes usar el ensayo local.'}</p>
+          </section>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Shopping Cart
-                </CardTitle>
-                <CardDescription>Imperative API</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {cart.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Your cart is empty</p>
-                    <p className="text-sm mt-2">Use <code className="bg-muted px-1 rounded">addToCart</code> to add items</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {cart.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-secondary rounded-lg">
-                        <div>
-                          <div className="font-medium">{item.quantity}x {item.menuItem.name}</div>
-                          <div className="text-sm text-muted-foreground">{item.restaurant.name}</div>
-                        </div>
-                        <div className="font-bold text-orange-600">${(item.menuItem.price * item.quantity).toFixed(2)}</div>
-                      </div>
-                    ))}
-                    <Separator />
-                    <div className="flex justify-between text-lg font-bold pt-2">
-                      <span>Total:</span>
-                      <span className="text-orange-600">${cartTotal.toFixed(2)}</span>
-                    </div>
-                    <Button
-                      onClick={() => { setCart([]); showNotification('Cart cleared') }}
-                      variant="destructive"
-                      className="w-full mt-4"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Clear Cart
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 dark:border-blue-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
-                  <Info className="w-5 h-5" />
-                  WebMCP Tools
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="space-y-1">
-                  <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
-                    <span className="font-medium">searchRestaurants</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
-                    <span className="font-medium">addToCart</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">HTML</Badge>
-                    <span className="font-medium">checkout</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
-                    <span className="font-medium">viewCart</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
-                    <span className="font-medium">clearCart</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">JS</Badge>
-                    <span className="font-medium">getRestaurantInfo</span>
-                  </p>
-                </div>
-                <Separator />
-                <p className="text-xs text-muted-foreground">
-                  Open &quot;Model Context Tool Inspector&quot; to see all tools
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        <footer className="mt-12 text-center text-sm text-muted-foreground space-y-2">
-          <p>WebMCP Demo for &quot;Prepara tu webapp para los agentes de nuestro día a día&quot;</p>
-          <p>Built with WebMCP, Next.js, shadcn/ui, and Tailwind CSS</p>
-        </footer>
+          <section className="taco-section result-section" aria-live="polite">
+            <h2>Último resultado</h2>
+            {lastResult ? <><p className={lastResult.success ? 'result-ok' : 'result-error'}>{lastResult.message}</p><details><summary>Ver respuesta estructurada</summary><pre>{JSON.stringify(lastResult, null, 2)}</pre></details></> : <p className="empty-state">Ejecuta una búsqueda o un paso del ensayo para ver la respuesta.</p>}
+          </section>
+        </aside>
       </div>
-    </div>
+
+      <footer className="taco-footer">WebMCP experimental · API revisada el 29 de octubre de 2026 · <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noreferrer">Documentación oficial</a></footer>
+
+      <dialog ref={dialogRef} onCancel={() => store.cancelReview()} className="review-dialog" aria-labelledby="review-title">
+        <ShieldCheck size={32} aria-hidden="true" /><h2 id="review-title">Revisa antes de confirmar</h2><p><code>checkout</code> solicitó tu revisión. Confirma únicamente si el carrito coincide con tu intención.</p>
+        <ul className="cart-items">{state.cart.map((item, index) => <li key={index}><span>{item.quantity} × {item.menuItem.name}</span><strong>{money(item.quantity * item.menuItem.price)}</strong></li>)}</ul><div className="cart-total"><span>Total ficticio</span><strong>{money(total)}</strong></div><p className="section-description">Esta demo no cobra, no envía pedidos y no guarda datos personales. La confirmación no se expone como herramienta.</p><div className="dialog-actions"><Button variant="outline" onClick={() => store.cancelReview()}>Cancelar</Button><Button onClick={() => setLastResult(store.confirmOrder())}>Confirmar pedido ficticio</Button></div>
+      </dialog>
+    </main>
   )
 }
